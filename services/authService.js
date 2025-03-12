@@ -63,7 +63,12 @@ const initiateRegistration = async (email, mobile, password, role) => {
     default:
       throw new CustomError("Invalid role specified", 400);
   }
-  const existingUser = await Model.findOne({ $or: [{ mobile: mobile }, { email: email }] });
+  let existingUser;
+  if(mobile){
+    existingUser = await Model.findOne({ mobile });
+  }else{
+    existingUser = await Model.findOne( { email: email });
+  }
   if (existingUser) throw new CustomError("User already registered!", 400);
   const otp = generateOTP();
   //   const to = "+91" + mobile;
