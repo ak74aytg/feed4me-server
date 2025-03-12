@@ -19,10 +19,12 @@ const farmerSchema = new Schema({
   email:{
     type: String,
     unique: true,
+    sparse: true
   },
   mobile: {
     type: String,
     unique: true, 
+    sparse: true,
     minlength: 10
   },
   date: {

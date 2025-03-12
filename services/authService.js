@@ -108,16 +108,17 @@ const verifyOTPAndRegister = async (identifier, otp, pendingRegistration, role) 
   }
   const otpRecord = await OTP.findOne({ $or: [{ mobile: identifier.toString() }, { email: identifier }] });
   if (!otpRecord) throw new CustomError("OTP expired or invalid!", 404);
-  console.log(otpRecord);
   if (otpRecord.otp !== otp) throw new CustomError("Invalid OTP!", 401);
   const newUser = await Model.create({
     name: pendingRegistration.name,
     email: pendingRegistration.email,
-    mobile: pendingRegistration.mobile,
+    mobile: pendingRegistration.mobile || undefined,
     password: pendingRegistration.hashedPass,
     age: pendingRegistration.age,
     location: pendingRegistration.location,
   });
+
+  console.log(newUser);
   const token = newUser.mobile ? generateAccessToken(newUser.mobile) : generateAccessToken(newUser.email);
   await OTP.deleteOne({ identifier });
   return { message: "Registration successful", user: newUser, token };
