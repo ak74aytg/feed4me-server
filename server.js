@@ -2,12 +2,15 @@ require("dotenv").config();
 const express = require("express");
 const connectDB = require("./db.js");
 const session = require('express-session')
+const { Server } = require("socket.io");
+const { createServer } = require("node:http")
+
+
 const authRoute = require("./routes/authRoute");
 const testRoute = require("./routes/testRoute");
 const farmerRouter = require("./routes/farmerRouter");
 const cropRouter = require("./routes/cropRoute")
-const { Server } = require("socket.io");
-const { createServer } = require("node:http")
+const inventoryRoute = require("./routes/inventoryRoute")
 
 
 // Middlewares
@@ -38,6 +41,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRoute);
 app.use("/api/farmer", farmerRouter)
+app.use("/api/inventory", inventoryRoute);
 app.use("/api/crops", cropRouter)
 app.use("/api/test", testRoute);
 

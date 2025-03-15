@@ -38,6 +38,7 @@ const initialRegisterController = async (req, res) => {
   try {
     const { hashedPass, message } = await authService.initiateRegistration( email, mobile, password, role);
     req.session.pendingRegistration = { name, email, mobile, hashedPass, age, location, role };
+    console.log(req.session.pendingRegistration);
     res.status(201).json({ status: "Registration successful", message });
   } catch (error) {
     if (error.status === "fail") res.status(error.statusCode).send({ error: error.message });
@@ -53,7 +54,6 @@ const verifyRegisterController = async (req, res) => {
     const { role } = req.params;
     const { identifier, otp } = req.body;
     const pendingRegistration = req.session.pendingRegistration;
-    // console.log(req.session)
     if (!pendingRegistration) return res.status(400).json({ error: "Registration session expired" });
     if(role != pendingRegistration.role) return res.status(400).json({error: "Invalid role specified"});
     const resp = await authService.verifyOTPAndRegister( identifier, otp, pendingRegistration, role );

@@ -38,12 +38,19 @@ const loginUser = async (identifier, password, role) => {
       throw new CustomError("Invalid role specified", 400);
   }
   const user = await Model.findOne({ $or: [{ mobile: identifier.toString() }, { email: identifier }] });
-  console.log(user)
   if (!user) throw new CustomError("Wrong credentials!", 401);
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) throw new CustomError("Wrong credentials!", 401);
   const token = user.mobile ? generateAccessToken(user.mobile) : generateAccessToken(user.email);
-  return { user, token };
+  const response = {};
+  response._id = user._id;
+  response.name = user.name;
+  response.age = user.age;
+  response.location = user.location;
+  response.role = role;
+  response.mobile = user.mobile || null;
+  response.email = user.email || null;
+  return { user : response, token };
 };
 
 
@@ -111,17 +118,25 @@ const verifyOTPAndRegister = async (identifier, otp, pendingRegistration, role) 
   if (otpRecord.otp !== otp) throw new CustomError("Invalid OTP!", 401);
   const newUser = await Model.create({
     name: pendingRegistration.name,
-    email: pendingRegistration.email,
+    email: pendingRegistration.email || undefined,
     mobile: pendingRegistration.mobile || undefined,
     password: pendingRegistration.hashedPass,
     age: pendingRegistration.age,
     location: pendingRegistration.location,
   });
-
-  console.log(newUser);
   const token = newUser.mobile ? generateAccessToken(newUser.mobile) : generateAccessToken(newUser.email);
   await OTP.deleteOne({ identifier });
-  return { message: "Registration successful", user: newUser, token };
+  await Model.create(newUser);
+
+  const response = {};
+  response._id = newUser._id;
+  response.name = newUser.name;
+  response.age = newUser.age;
+  response.location = newUser.location;
+  response.role = role;
+  response.mobile = newUser.mobile || null;
+  response.email = newUser.email || null;
+  return { status: "Registration successful", data: response, token };
 };
 
 

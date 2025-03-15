@@ -10,7 +10,14 @@ const farmerSchema = new Schema({
     type: String,
   },
   location: {
-    type: String
+    address: { type: String, required: true },
+    coordinates: {
+      type: { type: String, enum: ["Point"], default: "Point" },
+      coordinates: {
+        type: [Number],
+        required: true,
+      },
+    },
   },
   password: {
     type: String,
@@ -32,5 +39,7 @@ const farmerSchema = new Schema({
     default: Date.now(),
   },
 });
+
+farmerSchema.index({ "location.coordinates": "2dsphere" });
 
 module.exports = mongoose.model("Farmers", farmerSchema);

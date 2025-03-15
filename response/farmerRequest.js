@@ -7,6 +7,7 @@ class FarmerResponse {
         this.email = email;
         this.crops = [];
         this.customers = [];
+        this.inventory = [];
     }
 
     addCrop(cropName, MRP, stock) {
@@ -15,6 +16,17 @@ class FarmerResponse {
 
     addCustomer(customerName) {
         this.customers.push({ name: customerName });
+    }
+
+    addInventory(id, name, crop, area, cost, owner){
+        this.inventory.push({
+            id: id,
+            name: name,
+            crop: crop,
+            area: area,
+            cost: cost,
+            owner: owner
+        });
     }
 }
 

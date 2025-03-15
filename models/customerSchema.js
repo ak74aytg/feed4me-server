@@ -6,22 +6,34 @@ const customerSchema = new Schema({
         type: String,
         required: true
     },
-    mobile: {
-        type: String,
-        required: true, 
-        unique: true, 
-        minlength: 10
-    },
-    email: {
+    email:{
         type: String,
         unique: true,
-    },
+        sparse: true
+      },
+      mobile: {
+        type: String,
+        unique: true, 
+        sparse: true,
+        minlength: 10
+      },
+      password:{
+        type : String,
+        required: true,
+      },
     age:{
         type: String,
     },
     location: {
-        type: String
-    }
+      address: { type: String, required: true },
+      coordinates: {
+        type: { type: String, enum: ["Point"], default: "Point" },
+        coordinates: {
+          type: [Number],
+          required: true,
+        },
+      },
+    },
 });
 
 module.exports = mongoose.model('Customers', customerSchema)

@@ -4,6 +4,7 @@ const farmerResponse = require("../response/farmerRequest");
 const Farmer = require("../models/farmerSchema");
 const CropDetails = require("../models/cropDetailSchema");
 const mongoose = require("mongoose");
+const Inventory = require("../models/invertorySchema");
 
 const secretKey = process.env.TOKEN_SECRET;
 
@@ -62,6 +63,19 @@ const getMyProfile = async (req, res) => {
     const farmerID = user._id;
     const crops = await CropDetails.find({ farmerID: farmerID });
     for (let crop of crops) farmerRes.addCrop(crop.name, crop.MRP, crop.stock);
+    const inventories = await Inventory.find({
+      takenBy: { $elemMatch: { farmer: farmerID } }
+    });
+    for(let i = 0; i < inventories.length; i++){
+      const item = inventories[i];
+      let area = 0;
+      for(let j=0;j<item.takenBy.length;j++){
+        if(item.takenBy[j].farmer == farmerID.toString()){
+          area += item.takenBy[j].quantity;
+        }
+      }
+      farmerRes.addInventory(item._id, item.name, item.crop, area, area*item.pricePerUnit, item.owner);
+    }
     res.json({ status: "Farmer fetched successfully", data: farmerRes });
   } catch (error) {
     if (error.status === "fail") res.status(error.statusCode).send({ error: error.message });
