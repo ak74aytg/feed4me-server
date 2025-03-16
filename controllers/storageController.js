@@ -58,8 +58,8 @@ const getMyInventory = async (req, res) => {
 const getInventoriesNearMe = async (req, res) => {
   try {
     const  farmer = await extractUserFromToken(req, Farmer);
-    const lat = req.body.lat || farmer.location.coordinates.coordinates[0];
-    const lng = req.body.lng || farmer.location.coordinates.coordinates[1];
+    const lat = parseFloat(req.query.lat) || farmer.location.coordinates.coordinates[0];
+    const lng = parseFloat(req.query.lng) || farmer.location.coordinates.coordinates[1];
     const inventories = await inventory.find({
         "location.coordinates": {
           $near: {
@@ -79,12 +79,14 @@ const getInventoriesNearMe = async (req, res) => {
 const buyInventory = async (req, res) => {
   try {
     const  farmer = await extractUserFromToken(req, Farmer);
-    const { inventoryId, quantity } = req.body;
+    const { inventoryId, quantity, exitDate } = req.body;
     const Inventory = await inventory.findById(inventoryId);
     if (!Inventory) return res.status(404).send("Inventory not found");
     if (Inventory.quantity < quantity) return res.status(400).send("Insufficient space available");
     Inventory.reservedQuantity += quantity;
-    Inventory.takenBy.push({ farmer : farmer._id, quantity : quantity});
+    if(Inventory.reservedQuantity > Inventory.totalQuantity) res.status(400).send("Insufficient space available");
+    const expDate = exitDate ? new Date(exitDate) : Date.now() + (1000 * 60 * 60 * 24 * 28);``
+    Inventory.takenBy.push({ farmer : farmer._id, quantity : quantity, date: Date.now(), exitDate: expDate });
     if(Inventory.reservedQuantity == Inventory.totalQuantity) Inventory.status = "full";
     await Inventory.save();
     const Supplier = await storageOwner.findById(Inventory.owner);

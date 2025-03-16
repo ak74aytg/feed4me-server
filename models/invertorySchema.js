@@ -49,6 +49,8 @@ const inventorySchema = new Schema({
         default: null,
       },
       quantity: Number,
+      date: { type: Date },
+      exitDate: { type: Date },
     },
   ],
   location: {
