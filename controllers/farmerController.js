@@ -59,7 +59,7 @@ const getMyProfile = async (req, res) => {
     const identifier = extractUsernameFromToken(token);
     const user = await Farmer.findOne({ $or: [{ mobile: identifier }, { email: identifier }] });
     if (!user) return res.status(402).send("token expired. Please login again!");
-    const farmerRes = new farmerResponse( user.name, user.age, user.location, user.mobile, user.email );
+    const farmerRes = new farmerResponse( user._id, user.name, user.age, user.location, user.mobile, user.email );
     const farmerID = user._id;
     const crops = await CropDetails.find({ farmerID: farmerID });
     for (let crop of crops) farmerRes.addCrop(crop.name, crop.MRP, crop.stock);

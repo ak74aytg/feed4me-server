@@ -1,5 +1,6 @@
 class FarmerResponse {
-    constructor(name, age, location, mobile, email) {
+    constructor(_id, name, age, location, mobile, email) {
+        this._id = _id;
         this.name = name;
         this.age = age;
         this.location = location;

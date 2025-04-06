@@ -11,6 +11,7 @@ const testRoute = require("./routes/testRoute");
 const farmerRouter = require("./routes/farmerRouter");
 const cropRouter = require("./routes/cropRoute")
 const inventoryRoute = require("./routes/inventoryRoute")
+const chatRouter = require("./routes/chatRoute.js")
 
 
 // Middlewares
@@ -25,6 +26,8 @@ const io = new Server(httpServer, {
       credentials: true,
   }
 });
+
+require('./socket.js')(io);
 
 app.use(express.static("public"));
 app.use(express.json());
@@ -44,12 +47,7 @@ app.use("/api/farmer", farmerRouter)
 app.use("/api/inventory", inventoryRoute);
 app.use("/api/crops", cropRouter)
 app.use("/api/test", testRoute);
-
-io.on('connection', (socket) => {
-  console.log("new user connected :" + socket.id);
-  socket.emit('testing', "Hello World!");
-})
-
+app.use("/api/message", chatRouter);
 httpServer.listen(port, () => {
   console.log(`App is listening on port ${port}`);
 });
