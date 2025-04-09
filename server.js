@@ -9,6 +9,7 @@ const { createServer } = require("node:http")
 const authRoute = require("./routes/authRoute");
 const testRoute = require("./routes/testRoute");
 const farmerRouter = require("./routes/farmerRouter");
+const ngoRoute = require("./routes/ngoRoute")
 const cropRouter = require("./routes/cropRoute")
 const inventoryRoute = require("./routes/inventoryRoute")
 const chatRouter = require("./routes/chatRoute.js")
@@ -29,6 +30,8 @@ const io = new Server(httpServer, {
 
 require('./socket.js')(io);
 
+app.use(express.static('public'))
+app.use('/uploads', express.static('uploads'));
 app.use(express.static("public"));
 app.use(express.json());
 app.use(session({
@@ -46,6 +49,7 @@ app.use("/api/auth", authRoute);
 app.use("/api/farmer", farmerRouter)
 app.use("/api/inventory", inventoryRoute);
 app.use("/api/crops", cropRouter)
+app.use("/api/ngo", ngoRoute);
 app.use("/api/test", testRoute);
 app.use("/api/message", chatRouter);
 httpServer.listen(port, () => {

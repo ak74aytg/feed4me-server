@@ -3,7 +3,7 @@ const Customers = require("../models/customerSchema");
 const Storage = require("../models/storageSchema");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const sendSMS = require("../services/smsService");
+const sendSMS = require("./smsService");
 const OTP = require("../models/otpSchema");
 const CustomError = require("../utils/customError");
 

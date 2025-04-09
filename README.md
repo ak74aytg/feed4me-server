@@ -581,3 +581,467 @@ Response:
   }
 }
 ```
+
+NGO API documentation
+
+14. register a ngo
+roles : [ngo]
+```
+Endpoint: POST /localhost:3000/api/auth/ngo/register/initiate
+```
+Request Body:
+```json
+{
+    "email":"ngo.saath@gmail.com", // official email of ngo
+    "password":"admin@123",
+    "contact_person":"shivaji", // name of person in contact
+    "phone":"4930993209", // phone number of the contact person (not ngo)
+    "name":"sub ka saath", // name of ngo
+    "registration_number":"ABSDCE353433", // official registration number of ngo
+    "focus_area":"food", // eg. food, poverty, women empowerment etc
+    "establishment":"03/01/2000", // date of creation
+    "location": {
+        "address":"nelium colony",
+        "coordinates":{
+            "coordinates" : [32.32, 32.44]
+        }
+    },
+    "website":"www.something.com"
+}
+```
+Response:
+```json
+{
+    "status": "OTP sent",
+}
+```
+15. Verify OTP
+```
+Endpoint: POST localhost:3000/api/auth/ngo/register/verify
+```
+Request Body:
+```json
+{
+  "identifier":"ngo.saath@gmail.com",
+  "otp":"16261"
+}
+```
+Response:
+```json
+{
+    "status": "registration successful",
+    "data": {
+        "_id": "67f60cd52f5bce3db4709e9d",
+        "name": "sub ka saath",
+        "location": {
+            "coordinates": {
+                "coordinates": [
+                    32.32,
+                    32.44
+                ],
+                "type": "Point"
+            },
+            "address": "nelium colony"
+        },
+        "role": "ngo",
+        "email": "ngo.test@gmail.com"
+    },
+    "token": "eyJhbGciOiJIUzI1NiJ9.bmdvLnRlc3RAZ21haWwuY29t.5jscceYZg89CauclNGax3p5QhJKFaa4nYtgTQYddvSY"
+}
+```
+
+16. Login a User
+```
+Endpoint: POST http://127.0.0.1:3000/api/auth/ngo/login
+```
+Request Body:
+```json
+{
+  "identifier":"ngo.saath@gmail.com",
+  "password":"admin@123"
+}
+```
+Response:
+```json
+{
+    "status": "Logged in successfully",
+    "data": {
+        "_id": "67f6032e4e391e93cc99e393",
+        "name": "sub ka saath",
+        "location": {
+            "coordinates": {
+                "coordinates": [
+                    32.32,
+                    32.44
+                ],
+                "type": "Point"
+            },
+            "address": "nelium colony"
+        },
+        "role": "ngo",
+        "email": "ngo.saarthi@gmail.com"
+    },
+    "token": "eyJhbGciOiJIUzI1NiJ9.bmdvLnNhYXJ0aGlAZ21haWwuY29t.Ql77uQuuPXqlKohYnjmKp6bGObQKjxkee9Griz3YAMY"
+}
+```
+
+17. get NGO list
+```
+Endpoint: GET http://127.0.0.1:3000/api/ngo
+```
+Response:
+```json
+{
+    "status": "success",
+    "data": [
+        {
+            "_id": "67f37b6f37980da48fb2fc19",
+            "name": "nescomm",
+            "registration_number": "asdfk49209320dfd",
+            "email": "ngo@gmail.com",
+            "password": "$2a$10$iqvDmgR04NQTF3.jtydMxe4hRZ3/Pg8dNcQpnQgzDTCnL9OtW6T/2",
+            "focusAreas": "food",
+            "establishment": "2002-12-01T18:30:00.000Z",
+            "status": "active",
+            "__v": 0,
+            "location": {
+                "coordinates": {
+                    "type": "Point",
+                    "coordinates": [
+                        75.3,
+                        76.98
+                    ]
+                },
+                "address": "haldwani"
+            },
+            "contactPerson": "akshit",
+            "contactPerson_phone": "949392392",
+            "website": "0"
+        },
+        {
+            "_id": "67f600231fb55ee52c10cded",
+            "name": "sub ka saath",
+            "registration_number": "ABSDCE353433",
+            "email": "ngo.saath@gmail.com",
+            "password": "$2a$10$01vCk7T5MuQmlBaC/ACX/.xeRE.WWpJj27Q7e1vscW8g2BFAbEwbS",
+            "focusAreas": "food",
+            "establishment": "2000-02-29T18:30:00.000Z",
+            "status": "active",
+            "__v": 0,
+            "location": {
+                "coordinates": {
+                    "coordinates": [
+                        32.32,
+                        32.44
+                    ],
+                    "type": "Point"
+                },
+                "address": "nelium colony"
+            },
+            "contactPerson": "shivaji",
+            "contactPerson_phone": "636025913",
+            "website": "0"
+        },
+        {
+            "_id": "67f60290a4fed443a5f51725",
+            "name": "sub ka saath",
+            "registration_number": "ABSDCE35343",
+            "email": "ngo.saathi@gmail.com",
+            "password": "$2a$10$Fya/cWG9EY/8tCLIICcBkObsClr9lU/oidKrnhPFacPXTj4yRG252",
+            "focusAreas": "food",
+            "establishment": "2000-02-29T18:30:00.000Z",
+            "status": "active",
+            "__v": 0,
+            "location": {
+                "coordinates": {
+                    "coordinates": [
+                        32.32,
+                        32.44
+                    ],
+                    "type": "Point"
+                },
+                "address": "nelium colony"
+            },
+            "contactPerson": "shivaji",
+            "contactPerson_phone": "636025913",
+            "website": "0"
+        },
+        {
+            "_id": "67f6032e4e391e93cc99e393",
+            "name": "sub ka saath",
+            "registration_number": "ABSDCE353493",
+            "email": "ngo.saarthi@gmail.com",
+            "password": "$2a$10$/xDfw6/AUJbUuJJglauMm.7DG1lEE6e4OdVDmoU.ZU25vSccRq2G.",
+            "focusAreas": "food",
+            "establishment": "2000-02-29T18:30:00.000Z",
+            "status": "active",
+            "__v": 0,
+            "location": {
+                "coordinates": {
+                    "coordinates": [
+                        32.32,
+                        32.44
+                    ],
+                    "type": "Point"
+                },
+                "address": "nelium colony"
+            },
+            "contactPerson": "shivaji",
+            "contactPerson_phone": "4930993209",
+            "website": "www.something.com"
+        },
+        {
+            "_id": "67f60cd52f5bce3db4709e9d",
+            "name": "sub ka saath",
+            "registration_number": "ABSDCE353df433",
+            "email": "ngo.test@gmail.com",
+            "password": "$2a$10$iRKjeA0jItfK7ecf4A9Jee5E39z9ot39O.ncJJRVPT4hQ806ddi1y",
+            "focusAreas": "food",
+            "establishment": "2000-02-29T18:30:00.000Z",
+            "status": "active",
+            "__v": 0,
+            "location": {
+                "coordinates": {
+                    "coordinates": [
+                        32.32,
+                        32.44
+                    ],
+                    "type": "Point"
+                },
+                "address": "nelium colony"
+            },
+            "contactPerson": "shivaji",
+            "contactPerson_phone": "4930993209",
+            "website": "www.something.com"
+        }
+    ]
+}
+```
+
+18. donate waste food
+```
+Endpoint: POST http://127.0.0.1:3000/api/ngo/donate
+```
+Request Body (FORM DATA):
+```json
+authorization : 'Bearer {token}' // token of a farmer or a storage owner
+{
+  "donor":"67d56ec3ffba679217bf0a0c",
+  "donorModel" : "Farmers", // only two string are allowed : ["Farmers", "Storage"] (case sensitive)
+  "ngo" : "67f6032e4e391e93cc99e393",
+  "wasteType": "human", // ['human', 'cattle'] (case sensitive)
+  "foodType" : "roti chawal",
+  "quantity" : "1kg",
+  "preparedOn": "8/4/2025",
+  "availableOn" : "9/4/2025",
+  "collectionPoint" : `{"address": "123 Street Name","coordinates": {"type": "Point","coordinates": [77.123456, 28.654321]}`, // use JSON.stringify(location object) before sending
+  "image" : `send file`
+}
+}
+```
+Response:
+```json
+{
+    "status": "success",
+    "donation": {
+        "donor": "67d56ec3ffba679217bf0a0c",
+        "donorModel": "Farmers",
+        "ngo": "67f6032e4e391e93cc99e393",
+        "wasteType": "human",
+        "foodType": "roti chawal",
+        "quantity": "1kg",
+        "preparedOn": "2025-08-03T18:30:00.000Z",
+        "collectionPoint": {
+            "address": "123 Street Name",
+            "coordinates": {
+                "type": "Point",
+                "coordinates": [
+                    77.123456,
+                    28.654321
+                ]
+            }
+        },
+        "status": "Pending",
+        "_id": "67f609969c5da3d89829f5f8",
+        "__v": 0,
+        "imageUrl": "/uploads/67f609969c5da3d89829f5f8-1744177558936.png"
+    }
+}
+```
+
+19. get donations given to a ngo
+```
+Endpoint: POST http://127.0.0.1:3000/api/ngo/donations
+```
+Request Body:
+```json
+authorization : 'Bearer {token}' // token of ngo
+```
+Response:
+```json
+{
+    "status": "success",
+    "data": [
+        {
+            "donor_details": {
+                "id": "67d56ec3ffba679217bf0a0c",
+                "name": "akshay",
+                "phone": null,
+                "email": "nol.void75@gmail.com",
+                "address": {
+                    "coordinates": {
+                        "type": "Point",
+                        "coordinates": [
+                            29.0222,
+                            79.4908
+                        ]
+                    },
+                    "address": "Pantnagar"
+                }
+            },
+            "ngo_details": {
+                "id": "67f37b6f37980da48fb2fc19",
+                "name": "nescomm"
+            },
+            "collectionPoint": {
+                "coordinates": {
+                    "type": "Point",
+                    "coordinates": [
+                        77.123456,
+                        28.654321
+                    ]
+                },
+                "address": "123 Street Name"
+            },
+            "_id": "67f55930802ec93d88529763",
+            "wasteType": "human",
+            "foodType": "roti",
+            "quantity": "1kg",
+            "preparedOn": "2025-12-02T18:30:00.000Z",
+            "status": "Pending",
+            "__v": 0,
+            "imageUrl": "/uploads/67f55930802ec93d88529763-1744132400422.png"
+        },
+        {
+            "donor_details": {
+                "id": "67d56ec3ffba679217bf0a0c",
+                "name": "akshay",
+                "phone": null,
+                "email": "nol.void75@gmail.com",
+                "address": {
+                    "coordinates": {
+                        "type": "Point",
+                        "coordinates": [
+                            29.0222,
+                            79.4908
+                        ]
+                    },
+                    "address": "Pantnagar"
+                }
+            },
+            "ngo_details": {
+                "id": "67f37b6f37980da48fb2fc19",
+                "name": "nescomm"
+            },
+            "collectionPoint": {
+                "coordinates": {
+                    "type": "Point",
+                    "coordinates": [
+                        77.123456,
+                        28.654321
+                    ]
+                },
+                "address": "123 Street Name"
+            },
+            "_id": "67f55a6278fc17d4a87a2de1",
+            "wasteType": "human",
+            "foodType": "roti",
+            "quantity": "1kg",
+            "preparedOn": "2025-12-02T18:30:00.000Z",
+            "status": "Pending",
+            "__v": 0,
+            "imageUrl": "/uploads/67f55a6278fc17d4a87a2de1-1744132706437.png"
+        },
+        {
+            "donor_details": {
+                "id": "67d55ffadd85cc341df87fdc",
+                "name": "akshay",
+                "phone": null,
+                "email": "nol.void75@gmail.com",
+                "address": {
+                    "coordinates": {
+                        "type": "Point",
+                        "coordinates": [
+                            29.0222,
+                            79.4908
+                        ]
+                    },
+                    "address": "Pantnagar"
+                }
+            },
+            "ngo_details": {
+                "id": "67f37b6f37980da48fb2fc19",
+                "name": "nescomm"
+            },
+            "collectionPoint": {
+                "coordinates": {
+                    "type": "Point",
+                    "coordinates": [
+                        77.123456,
+                        28.654321
+                    ]
+                },
+                "address": "123 Street Name"
+            },
+            "_id": "67f56281749b8ccd120531c2",
+            "wasteType": "human",
+            "foodType": "roti",
+            "quantity": "1kg",
+            "preparedOn": "2025-12-02T18:30:00.000Z",
+            "status": "Pending",
+            "__v": 0,
+            "imageUrl": "/uploads/67f56281749b8ccd120531c2-1744134785396.png"
+        },
+        {
+            "donor_details": {
+                "id": "67d56ec3ffba679217bf0a0c",
+                "name": "akshay",
+                "phone": null,
+                "email": "nol.void75@gmail.com",
+                "address": {
+                    "coordinates": {
+                        "type": "Point",
+                        "coordinates": [
+                            29.0222,
+                            79.4908
+                        ]
+                    },
+                    "address": "Pantnagar"
+                }
+            },
+            "ngo_details": {
+                "id": "67f37b6f37980da48fb2fc19",
+                "name": "nescomm"
+            },
+            "collectionPoint": {
+                "coordinates": {
+                    "type": "Point",
+                    "coordinates": [
+                        77.123456,
+                        28.654321
+                    ]
+                },
+                "address": "123 Street Name"
+            },
+            "_id": "67f562f1749b8ccd120531c8",
+            "wasteType": "human",
+            "foodType": "roti",
+            "quantity": "1kg",
+            "preparedOn": "2025-12-02T18:30:00.000Z",
+            "status": "Pending",
+            "__v": 0,
+            "imageUrl": "/uploads/67f562f1749b8ccd120531c8-1744134897082.png"
+        }
+    ]
+}
+```

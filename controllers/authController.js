@@ -1,6 +1,7 @@
 const authService = require("../services/authService");
 const CustomError = require("../utils/customError");
 const jwt = require("jsonwebtoken");
+const { registerNgo, verifyNgo, loginNgo } = require("./ngoController");
 
 
 const secretKey = process.env.TOKEN_SECRET;
@@ -19,6 +20,9 @@ const extractUsernameFromToken = (token) => {
 //login controller
 const loginController = async (req, res) => {
   const { role } = req.params;
+  if(role == 'ngo'){
+    return loginNgo(req, res);
+  }
   const { identifier, password } = req.body;
   try {
     const { user, token } = await authService.loginUser(identifier, password, role);
@@ -34,6 +38,9 @@ const loginController = async (req, res) => {
 //register controller
 const initialRegisterController = async (req, res) => {
   const { role } = req.params;
+  if(role == 'ngo'){
+    return registerNgo(req, res);
+  }
   const { name, email, mobile, password, age, location } = req.body;
   try {
     const { hashedPass, message } = await authService.initiateRegistration( email, mobile, password, role);
@@ -52,6 +59,9 @@ const initialRegisterController = async (req, res) => {
 const verifyRegisterController = async (req, res) => {
   try {
     const { role } = req.params;
+    if(role == 'ngo'){
+      return verifyNgo(req, res);
+    }
     const { identifier, otp } = req.body;
     const pendingRegistration = req.session.pendingRegistration;
     if (!pendingRegistration) return res.status(400).json({ error: "Registration session expired" });
