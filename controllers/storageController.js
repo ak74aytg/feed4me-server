@@ -32,9 +32,9 @@ const extractUserFromToken = async (req, Model) => {
 
 const addInventory = async (req, res) => {
   try {
-    const Owner = await extractUserFromToken(req, storageOwner);
+    const { ownerId } = req.query;
     const request = new InventoryRequest(req.body);
-    request.owner = Owner._id;
+    request.owner = ownerId;
     await inventory.create(request);
     res.json({ status: "Inventory added successfully", data: request });
   } catch (error) {
@@ -46,8 +46,8 @@ const addInventory = async (req, res) => {
 
 const getMyInventory = async (req, res) => {
   try {
-    const Owner = await extractUserFromToken(req, storageOwner);
-    const inventories = await inventory.find({ owner: Owner._id });
+    const {ownerId} = req.query;
+    const inventories = await inventory.find({ owner : ownerId });
     res.json({ status: "Inventory fetched successfully", data: inventories });
   } catch (error) {
     if (error.status === "fail") res.status(error.statusCode).send({ error: error.message });
@@ -57,14 +57,13 @@ const getMyInventory = async (req, res) => {
 
 const getInventoriesNearMe = async (req, res) => {
   try {
-    const  farmer = await extractUserFromToken(req, Farmer);
-    const lat = parseFloat(req.query.lat) || farmer.location.coordinates.coordinates[0];
-    const lng = parseFloat(req.query.lng) || farmer.location.coordinates.coordinates[1];
+    const lat = parseFloat(req.query.lat);
+    const lng = parseFloat(req.query.lng);
     const inventories = await inventory.find({
         "location.coordinates": {
           $near: {
             $geometry: { type: "Point", coordinates: [lat, lng] },
-            $maxDistance: 60000 // 60 km radius
+            $maxDistance: 60000
           }
         }
       });
