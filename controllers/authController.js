@@ -45,7 +45,6 @@ const initialRegisterController = async (req, res) => {
   try {
     const { hashedPass, message } = await authService.initiateRegistration( email, mobile, password, role);
     req.session.pendingRegistration = { name, email, mobile, hashedPass, age, location, role };
-    console.log(req.session.pendingRegistration);
     res.status(201).json({ status: "Registration successful", message });
   } catch (error) {
     if (error.status === "fail") res.status(error.statusCode).send({ error: error.message });

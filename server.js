@@ -13,8 +13,7 @@ const ngoRoute = require("./routes/ngoRoute")
 const cropRouter = require("./routes/cropRoute")
 const inventoryRoute = require("./routes/inventoryRoute")
 const chatRouter = require("./routes/chatRoute.js");
-const customerSchema = require("./models/customerSchema.js");
-
+const customerSchema = require("./routes/customerRouter")
 
 // Middlewares
 const app = express();

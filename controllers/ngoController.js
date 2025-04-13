@@ -12,7 +12,6 @@ const Farmer = require("../models/farmerSchema");
 const Storage = require("../models/storageSchema");
 const fs = require("fs");
 const path = require("path");
-const { json } = require("express");
 
 const secretKey = process.env.TOKEN_SECRET;
 
@@ -148,11 +147,9 @@ const loginNgo = async (req, res) => {
 const getNearbyNgos = async (req, res) => {
   try {
     const { latitude, longitude, radiusInKm = 10 } = req.query;
-
     if (!latitude || !longitude) {
       return res.status(400).json({ status: "fail", message: "Latitude and longitude are required." });
     }
-
     const contacts = await NGOContact.find({
       "location.coordinates": {
         $near: {
@@ -164,10 +161,8 @@ const getNearbyNgos = async (req, res) => {
         },
       },
     });
-
     const ngoIds = contacts.map(c => c.ngoId);
     const ngos = await NGO.find({ _id: { $in: ngoIds } });
-
     const mergedList = contacts.map((contact) => {
       const ngo = ngos.find(n => String(n._id) === String(contact.ngoId));
       const { ngoId, _id, ...contactData } = contact.toObject();

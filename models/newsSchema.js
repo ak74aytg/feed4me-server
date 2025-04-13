@@ -8,6 +8,7 @@ const newsSchema = new mongoose.Schema({
   imageUrl: { type: String },
   language: { type: String, default: 'en' },
   createdAt: { type: Date, default: Date.now },
+  authorName : {type: String},
 });
 
 module.exports = mongoose.model('News', newsSchema);

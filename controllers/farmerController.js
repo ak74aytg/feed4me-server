@@ -119,7 +119,6 @@ const getNews = async (req, res) => {
     ...(lang && { language: lang }),
     $or: [{ validTill: { $gte: new Date() } }, { validTill: null }]
   };
-
   const news = await News.find(filter).sort({ createdAt: -1 });
   const newsList = news.map(item => {
     return {
@@ -127,7 +126,7 @@ const getNews = async (req, res) => {
       imageUrl: `${BASE_URL}${item.imageUrl}`
     };
   });
-  res.json({ status: "success", newsList });
+  res.json({ status: "success", data : newsList });
 }
 
 const addInventory = async (req, res) => {
