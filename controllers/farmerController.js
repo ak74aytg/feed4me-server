@@ -9,7 +9,7 @@ const News = require("../models/newsSchema")
 const InventoryRequest = require("../requests/inventoryRequest")
 
 const secretKey = process.env.TOKEN_SECRET;
-const BASE_URL = "http://localhost:3000";
+const BASE_URL = "http://15.206.166.59:3000";
 
 const extractUsernameFromToken = (token) => {
   try {
