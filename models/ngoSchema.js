@@ -24,4 +24,5 @@ const ngoSchema = new mongoose.Schema({
     }
 })
 
+
 module.exports = mongoose.model('NGOs', ngoSchema)

@@ -5,8 +5,11 @@ const Farmer = require("../models/farmerSchema");
 const CropDetails = require("../models/cropDetailSchema");
 const mongoose = require("mongoose");
 const Inventory = require("../models/invertorySchema");
+const News = require("../models/newsSchema")
+const InventoryRequest = require("../requests/inventoryRequest")
 
 const secretKey = process.env.TOKEN_SECRET;
+const BASE_URL = "http://localhost:3000";
 
 const extractUsernameFromToken = (token) => {
   try {
@@ -109,10 +112,47 @@ const updateInfo = async (req, res) => {
   }
 };
 
+const getNews = async (req, res) => {
+  const { tag, lang } = req.query;
+  const filter = { 
+    ...(tag && { tags: tag }),
+    ...(lang && { language: lang }),
+    $or: [{ validTill: { $gte: new Date() } }, { validTill: null }]
+  };
+
+  const news = await News.find(filter).sort({ createdAt: -1 });
+  const newsList = news.map(item => {
+    return {
+      ...item.toObject(),
+      imageUrl: `${BASE_URL}${item.imageUrl}`
+    };
+  });
+  res.json({ status: "success", newsList });
+}
+
+const addInventory = async (req, res) => {
+  try {
+    const token = req.headers["authorization"]?.split(" ")[1];
+    if (!token) return res.status(403).send("A token is required for authentication");
+    const identifier = extractUsernameFromToken(token);
+    const farmer = await Farmer.findOne({ $or: [{ mobile: identifier }, { email: identifier }] });
+    if (!farmer) return res.status(402).send("Token expired. Please login again!");
+    const request = new InventoryRequest(req.body);
+    request.owner = farmer._id;
+    await Inventory.create(request);
+    res.json({ status: "Inventory added successfully", data: request });
+  } catch (error) {
+    if (error.status === "fail")
+      res.status(error.statusCode).send({ error: error.message });
+    else res.status(500).send({ error: error.message });
+  }
+};
 
 module.exports = {
   getAllFarmersController,
   getFarmerController,
   getMyProfile,
   updateInfo,
+  getNews,
+  addInventory
 };

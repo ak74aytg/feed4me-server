@@ -9,6 +9,7 @@ router.post('/purchase', storageController.buyInventory);
 router.get('/:id', commonController.getInventory);
 router.get('/', storageController.getMyInventory);
 router.post('/', storageController.addInventory);
+
 router.put('/', ()=>{});
 router.delete('/', ()=>{});
 

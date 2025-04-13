@@ -145,25 +145,43 @@ const loginNgo = async (req, res) => {
   }
 };
 
-const getNgoList = async (req, res) => {
+const getNearbyNgos = async (req, res) => {
   try {
-    const NgoList = await NGO.find();
-    const NgoContactList = await ngoContactSchema.find();
-    const mergedList = NgoList.map((ngo) => {
-        const contact = NgoContactList.find((c) => String(c.ngoId) === String(ngo._id));
-        const { ngoId, _id, ...contactWithoutNgoIdAndId } = contact?.toObject() || {};
-        return {
-            _id: ngo._id,
-            ...ngo.toObject(),
-            ...contactWithoutNgoIdAndId,
-        };
+    const { latitude, longitude, radiusInKm = 10 } = req.query;
+
+    if (!latitude || !longitude) {
+      return res.status(400).json({ status: "fail", message: "Latitude and longitude are required." });
+    }
+
+    const contacts = await NGOContact.find({
+      "location.coordinates": {
+        $near: {
+          $geometry: {
+            type: "Point",
+            coordinates: [parseFloat(longitude), parseFloat(latitude)],
+          },
+          $maxDistance: radiusInKm * 1000,
+        },
+      },
     });
+
+    const ngoIds = contacts.map(c => c.ngoId);
+    const ngos = await NGO.find({ _id: { $in: ngoIds } });
+
+    const mergedList = contacts.map((contact) => {
+      const ngo = ngos.find(n => String(n._id) === String(contact.ngoId));
+      const { ngoId, _id, ...contactData } = contact.toObject();
+      return {
+        _id: ngo?._id,
+        ...ngo?.toObject(),
+        ...contactData,
+      };
+    });
+
     return res.json({ status: "success", data: mergedList });
   } catch (error) {
     console.log(error);
-    if (error.status === "fail")
-      return res.status(error.statusCode).send({ error: error.message });
-    else return res.status(500).send({ error: error.message });
+    return res.status(500).json({ status: "fail", message: error.message });
   }
 };
 
@@ -275,7 +293,7 @@ module.exports = {
   registerNgo,
   verifyNgo,
   loginNgo,
-  getNgoList,
+  getNearbyNgos,
   donateWaste,
   getDonations,
 };

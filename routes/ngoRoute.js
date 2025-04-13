@@ -7,7 +7,7 @@ const upload = multer({ storage: storage });
 
 const router = express.Router();
 
-router.get("/", ngoController.getNgoList);
+router.get("/", ngoController.getNearbyNgos);
 router.post("/donate", upload.single("image"), ngoController.donateWaste);
 router.get("/donations", ngoController.getDonations)
 

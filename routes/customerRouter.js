@@ -1,14 +1,15 @@
 const express = require('express');
+const customerController = require("../controllers/customerController")
 
 const router = express.Router();
 
 //get all customers
-router.get('/customers', ()=>{});
+router.post('/inventory/add', customerController.addInventory);
 //get specific customer
-router.get('/customers/:id', ()=>{});
+router.get('/:id', ()=>{});
 //get my profile
-router.get('/customers/me', ()=>{});
+router.get('/me', ()=>{});
 //edit my profile
-router.put('/customer', ()=>{});
+router.put('', ()=>{});
 
 module.exports = router;
