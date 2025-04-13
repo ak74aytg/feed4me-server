@@ -25,15 +25,6 @@ const extractUserFromToken = async (req, Model) => {
 
 const getInventory = async (req, res) => {
   try {
-    let user = await extractUserFromToken(req, storageOwner);
-    if (!user) user = await extractUserFromToken(req, Farmer);
-    if (!user) {
-      return res
-        .status(402)
-        .send(
-          "Invalid token, Please login again!"
-        );
-    }
     const inventoryId = req.params.id;
     const inventory = await Inventory.findById(inventoryId);
     res.json({ status: "Inventory fetched successfully", data: inventory });
