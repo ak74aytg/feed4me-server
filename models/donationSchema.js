@@ -24,14 +24,11 @@ const donationSchema = new mongoose.Schema ({
       foodType : String,
       quantity: String,
       preparedOn: {
-        type: Date,
-        required: true,
+        type: String,
       },
-      imageUrl : String,
-      availableOn : {
-        from : Date,
-        to : Date
-      },
+      availableOn: {
+        type: String,
+      },      
       collectionPoint : {
         address: { type: String, required: true },
         coordinates: {
