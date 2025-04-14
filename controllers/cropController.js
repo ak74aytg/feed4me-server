@@ -20,8 +20,10 @@ const addCropDetails = async (req, res) => {
   try {
     const token = req.headers["authorization"]?.split(" ")[1];
     if (!token) return res.status(403).send("A token is required for authentication");
-    const mobile = extractUsernameFromToken(token);
-    const farmer = await Farmer.findOne({ mobile });
+    const identifier = extractUsernameFromToken(token);
+    const farmer = await Farmer.findOne({
+      $or: [{ mobile: identifier }, { email: identifier }],
+    });
     if (!farmer) return res.status(402).send("Token expired. Please login again!");
     const { name, MRP, stock } = req.body;
     const newCrop = new CropDetails({ farmerID: farmer._id, name, MRP, stock });
