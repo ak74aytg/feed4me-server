@@ -10,5 +10,6 @@ const router = express.Router();
 router.get("/", ngoController.getNearbyNgos);
 router.post("/donate", upload.single("image"), ngoController.donateWaste);
 router.get("/donations", ngoController.getDonations)
+router.put("/update", ngoController.updateStatus)
 
 module.exports = router;

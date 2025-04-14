@@ -14,6 +14,7 @@ const fs = require("fs");
 const path = require("path");
 
 const secretKey = process.env.TOKEN_SECRET;
+const BASE_URL = "http://15.206.166.59:3000";
 
 const extractUsernameFromToken = (token) => {
   try {
@@ -195,7 +196,7 @@ const donateWaste = async (req, res) => {
       });
     }
     if (!user)
-      return res.status(402).send("token expired. Please login again!");
+      return res.status(401).send("token expired. Please login again!");
     const {
       donor,
       donorModel,
@@ -208,7 +209,13 @@ const donateWaste = async (req, res) => {
       collectionPoint,
       status,
     } = req.body;
-    const location = JSON.parse(collectionPoint);
+    // const location = JSON.parse(collectionPoint);
+    let location;
+    try {
+      location = typeof collectionPoint === "string" ? JSON.parse(collectionPoint) : collectionPoint;
+    } catch (err) {
+      return res.status(400).send("Invalid collectionPoint format. Must be JSON string or object.");
+    }
     const newDonation = new Donation({
       donor,
       donorModel,
@@ -219,7 +226,7 @@ const donateWaste = async (req, res) => {
       preparedOn,
       availableOn,
       collectionPoint: location,
-      status,
+      status: status || "pending",
     });
     const savedDonation = await newDonation.save();
     if (req.file) {
@@ -234,12 +241,48 @@ const donateWaste = async (req, res) => {
     }
     return res.json({ status: "success", donation: savedDonation });
   } catch (error) {
-    console.log(error);
+    console.error("Error in donateWaste:", error);
     if (error.status === "fail")
       return res.status(error.statusCode).send({ error: error.message });
     else return res.status(500).send({ error: error.message });
   }
 };
+
+const getMyDonations = async(req, res) => {
+  try{
+    const {donorId} = req.query;
+    const donations = await Donation.find({donor : donorId});
+    const donationList = await Promise.all(
+      donations.map(async (donation) => {
+        let sender = await Farmer.findById(donation.donor);
+        if (!sender) sender = await Storage.findById(donation.donor);
+        const receiver = await NGO.findById(donation.ngo);
+        const { donor, donorModel, ngo,imageUrl, ...info } = donation?.toObject() || {};
+        return {
+          donor_details: {
+            id: sender?._id || null,
+            name: sender?.name || null,
+            phone: sender?.mobile || null,
+            email: sender?.email || null,
+            address: sender?.location || null
+          },
+          ngo_details: {
+            id: receiver?._id || null,
+            name: receiver?.name || null,
+          },
+          imageUrl : `${BASE_URL}${imageUrl}`,
+          ...info
+        };
+      })
+    );
+    return res.json({status : "success" , data : donationList});
+  } catch (error) {
+    console.log(error);
+    if (error.status === "fail")
+      return res.status(error.statusCode).send({ error: error.message });
+    else return res.status(500).send({ error: error.message });
+  }
+}
 
 const getDonations = async (req, res) => {
   try {
@@ -251,7 +294,7 @@ const getDonations = async (req, res) => {
       $or: [{ registration_number: identifier }, { email: identifier }],
     });
     if (!user)
-      return res.status(402).send("token expired. Please login again!");
+      return res.status(401).send("token expired. Please login again!");
     const donations = await Donation.find({ ngo: user._id });
     const donationList = await Promise.all(
       donations.map(async (donation) => {
@@ -284,6 +327,37 @@ const getDonations = async (req, res) => {
   }
 };
 
+const updateStatus = async (req, res) => {
+  try {
+    const token = req.headers["authorization"]?.split(" ")[1];
+    if (!token)
+      return res.status(403).send("A token is required for authentication");
+    const identifier = extractUsernameFromToken(token);
+    const user = await NGO.findOne({
+      $or: [{ registration_number: identifier }, { email: identifier }],
+    });
+    if (!user)
+      return res.status(401).send("token expired. Please login again!");
+    const { donationId, status } = req.body;
+    if(!donationId || !status) {
+       return res.status(400).send("Missing required fields.");
+    }
+    const donation = await Donation.findById(donationId);
+    if (!donation.ngo.equals(user._id)) {
+      return res.status(401).send("You are not authorized!");
+    }    
+    donation.status = status;
+    await donation.save();
+    const savedDonation = await Donation.findById(donationId);
+    return res.json({status : "success", data : savedDonation});
+  }catch(error){
+    console.log(error);
+    if (error.status === "fail")
+      return res.status(error.statusCode).send({ error: error.message });
+    else return res.status(500).send({ error: error.message });
+  }
+}
+
 module.exports = {
   registerNgo,
   verifyNgo,
@@ -291,4 +365,8 @@ module.exports = {
   getNearbyNgos,
   donateWaste,
   getDonations,
+  getMyDonations,
+  updateStatus
 };
+
+

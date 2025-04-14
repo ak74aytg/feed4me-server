@@ -14,6 +14,7 @@ const cropRouter = require("./routes/cropRoute")
 const inventoryRoute = require("./routes/inventoryRoute")
 const chatRouter = require("./routes/chatRoute.js");
 const customerSchema = require("./routes/customerRouter")
+const ngoController = require("./controllers/ngoController")
 
 // Middlewares
 const app = express();
@@ -53,6 +54,7 @@ app.use("/api/ngo", ngoRoute);
 app.use("/api/test", testRoute);
 app.use("/api/message", chatRouter);
 app.use("/api/customer", customerSchema);
+app.get("/api/donations/list", ngoController.getMyDonations)
 httpServer.listen(port, () => {
   console.log(`App is listening on port ${port}`);
 });
