@@ -7,16 +7,11 @@ class FarmerResponse {
         this.mobile = mobile;
         this.email = email;
         this.crops = [];
-        this.customers = [];
         this.inventory = [];
     }
 
-    addCrop(cropName, MRP, stock) {
-        this.crops.push({ name: cropName, MRP:MRP, stock: stock });
-    }
-
-    addCustomer(customerName) {
-        this.customers.push({ name: customerName });
+    addCrop(cropId, cropName, MRP, stock) {
+        this.crops.push({ _id: cropId, name: cropName, MRP:MRP, stock: stock });
     }
 
     addInventory(id, name, crop, area, cost, owner){

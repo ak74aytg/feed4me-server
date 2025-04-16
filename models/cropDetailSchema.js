@@ -10,6 +10,9 @@ const cropDetailsSchema = new mongoose.Schema({
     type: String, 
     required: true 
   },
+  imageUrl: {
+    type : String,
+  },
   MRP: { 
     type: Number, 
     required: true 

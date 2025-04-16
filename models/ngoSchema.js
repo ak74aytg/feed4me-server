@@ -15,7 +15,10 @@ const ngoSchema = new mongoose.Schema({
         type : String,
         require: true,
     },
-    focusAreas : String,
+    focusAreas : {
+        type: String,
+        require: true,
+    },
     establishment: Date,
     status: {
         type: String,

@@ -5,8 +5,10 @@ const Farmer = require("../models/farmerSchema");
 const CropDetails = require("../models/cropDetailSchema");
 const mongoose = require("mongoose");
 const Inventory = require("../models/invertorySchema");
-const News = require("../models/newsSchema")
-const InventoryRequest = require("../requests/inventoryRequest")
+const News = require("../models/newsSchema");
+const InventoryRequest = require("../requests/inventoryRequest");
+const Purchases = require("../models/purchaseDetailsSchema");
+const Customer = require("../models/customerSchema");
 
 const secretKey = process.env.TOKEN_SECRET;
 const BASE_URL = "http://15.206.166.59:3000";
@@ -65,7 +67,7 @@ const getMyProfile = async (req, res) => {
     const farmerRes = new farmerResponse( user._id, user.name, user.age, user.location, user.mobile, user.email );
     const farmerID = user._id;
     const crops = await CropDetails.find({ farmerID: farmerID });
-    for (let crop of crops) farmerRes.addCrop(crop.name, crop.MRP, crop.stock);
+    for (let crop of crops) farmerRes.addCrop(crop._id, crop.name, crop.MRP, crop.stock);
     const inventories = await Inventory.find({
       takenBy: { $elemMatch: { farmer: farmerID } }
     });
@@ -147,11 +149,39 @@ const addInventory = async (req, res) => {
   }
 };
 
+const getMyCustomers = async (req, res) => {
+  try {
+    const token = req.headers["authorization"]?.split(" ")[1];
+    if (!token) return res.status(403).send("A token is required for authentication");
+    const identifier = extractUsernameFromToken(token);
+    const farmer = await Farmer.findOne({ $or: [{ mobile: identifier }, { email: identifier }] });
+    if (!farmer) return res.status(402).send("Token expired. Please login again!");
+    const purchase = await Purchases.find({seller : farmer._id});
+    const customerList = await Promise.all(
+      purchase.map(async (item) => {
+        const customer = await Customer.findById(item.buyer);
+        const crop = await CropDetails.findById(item.crop);
+        return {
+          'customer' : customer,
+          'crop' : crop,
+          'amount' : item.quantity
+        }
+      })
+    )
+    return res.json({status : 'success', data : customerList});
+  } catch (error) {
+    if (error.status === "fail")
+      res.status(error.statusCode).send({ error: error.message });
+    else res.status(500).send({ error: error.message });
+  }
+}
+
 module.exports = {
   getAllFarmersController,
   getFarmerController,
   getMyProfile,
   updateInfo,
   getNews,
-  addInventory
+  addInventory,
+  getMyCustomers
 };
