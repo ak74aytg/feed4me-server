@@ -3,7 +3,7 @@ const cropController = require('../controllers/cropController')
 
 const router = express.Router();
 
-router.get('/', ()=>{});
+router.get('/all', cropController.getCropList);
 router.post('/', cropController.addCropDetails);
 router.put('/', ()=>{});
 router.delete('/', ()=>{});

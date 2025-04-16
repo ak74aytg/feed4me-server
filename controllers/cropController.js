@@ -36,6 +36,12 @@ const addCropDetails = async (req, res) => {
   }
 };
 
+const getCropList = async (req, res) => {
+  const cropList = await CropDetails.find();
+  return res.send({status : 'success', data : cropList});
+}
+
 module.exports = {
   addCropDetails,
+  getCropList
 };
