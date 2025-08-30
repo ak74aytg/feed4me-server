@@ -2,8 +2,11 @@ const jwt = require("jsonwebtoken");
 const CustomError = require("../utils/customError");
 const CropDetails = require("../models/cropDetailSchema");
 const Farmer = require("../models/farmerSchema");
+const fs = require("fs");
+const path = require("path");
 
 const secretKey = process.env.TOKEN_SECRET;
+const BASE_URL = "http://15.206.166.59:3000";
 
 const extractUsernameFromToken = (token) => {
   try {
@@ -27,8 +30,25 @@ const addCropDetails = async (req, res) => {
     if (!farmer) return res.status(402).send("Token expired. Please login again!");
     const { name, MRP, stock } = req.body;
     const newCrop = new CropDetails({ farmerID: farmer._id, name, MRP, stock });
-    await newCrop.save();
-    res.json({ status: "Crop added successfully", data: newCrop });
+    const savedCrop = await newCrop.save();
+    if (req.file) {
+      const uploadDir = path.join(__dirname, "../uploads");
+      if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
+      const ext = path.extname(req.file.originalname);
+      const fileName = `${savedCrop._id}-${Date.now()}${ext}`;
+      const filePath = path.join(uploadDir, fileName);
+      fs.writeFileSync(filePath, req.file.buffer);
+      savedCrop.imageUrl = `/uploads/${fileName}`;
+      await savedCrop.save();
+    }
+    // const cropList = savedCrop.map((crop) => {
+      const {imageUrl, ...item} = savedCrop.toObject();
+      const cropItem = {
+        imageUrl : imageUrl ? `${BASE_URL}${imageUrl}` : null,
+        ...item,
+      }
+    // })
+    res.json({ status: "Crop added successfully", data: cropItem });
   } catch (error) {
     if (error.status === "fail")
       res.status(error.statusCode).send({ error: error.message });
@@ -38,7 +58,15 @@ const addCropDetails = async (req, res) => {
 
 const getCropList = async (req, res) => {
   const cropList = await CropDetails.find();
-  return res.send({status : 'success', data : cropList});
+  const crops = cropList.map((crop) => {
+    const cropObj = crop.toObject();
+    const {imageUrl, ...item} = cropObj;
+    return {
+      imageUrl : imageUrl ? `${BASE_URL}${imageUrl}` : null,
+      ...item,
+    }
+  })
+  return res.send({status : 'success', data : crops});
 }
 
 module.exports = {

@@ -368,5 +368,3 @@ module.exports = {
   getMyDonations,
   updateStatus
 };
-
-

@@ -5,7 +5,6 @@ const session = require('express-session')
 const { Server } = require("socket.io");
 const { createServer } = require("node:http")
 
-
 const authRoute = require("./routes/authRoute");
 const testRoute = require("./routes/testRoute");
 const farmerRouter = require("./routes/farmerRouter");
@@ -13,9 +12,12 @@ const ngoRoute = require("./routes/ngoRoute")
 const cropRouter = require("./routes/cropRoute")
 const inventoryRoute = require("./routes/inventoryRoute")
 const chatRouter = require("./routes/chatRoute.js");
-const customerSchema = require("./routes/customerRouter")
-const ngoController = require("./controllers/ngoController")
+const customerRouter = require("./routes/customerRouter")
+const paymentRouter = require("./routes/paymentRoute.js")
+const reviewRouter = require("./routes/reviewRoute.js")
+const ratingRouter = require("./routes/ratingRoute.js")
 
+const ngoController = require("./controllers/ngoController")
 // Middlewares
 const app = express();
 const port = process.env.PORT | 3000;
@@ -53,9 +55,55 @@ app.use("/api/crops", cropRouter)
 app.use("/api/ngo", ngoRoute);
 app.use("/api/test", testRoute);
 app.use("/api/message", chatRouter);
-app.use("/api/customer", customerSchema);
+app.use("/api/customer", customerRouter);
 app.get("/api/donations/list", ngoController.getMyDonations)
+app.use('/api/payment', paymentRouter);
+app.use('/api/review', reviewRouter);
+app.use('/api/rating', ratingRouter);
+
 
 httpServer.listen(port, () => {
   console.log(`App is listening on port ${port}`);
 });
+
+
+
+// / Reviews
+// export interface Review {
+//   id: string;
+//   username: string;
+//   userAvatar: string | null;
+//   rating: number;
+//   comment: string;
+//   createdAt: string;
+//   helpfulCount: number;
+//   // votes?: string[]; // Uncomment if you manage voting
+// }
+
+
+// const reviews: Review[] = [
+//   {
+//     id: "r4",
+//     username: "Amit Verma",
+//     userAvatar: "https://example.com/avatar4.jpg",
+//     rating: 4,
+//     comment:
+//       "Good app overall, but occasional lag when switching screens. Ads are not intrusive.",
+//     createdAt: "2025-06-12T09:10:00Z",
+//     deviceType: "Phone",
+//     helpfulCount: 45,
+//   },
+
+//   {
+//     id: "r6",
+//     username: "Rohan Das",
+//     userAvatar: "https://example.com/avatar6.jpg",
+//     rating: 5,
+//     comment:
+//       "Highly recommend for casual and serious players alike. Clean design and no hassles.",
+//     createdAt: "2025-07-15T07:40:00Z",
+//     deviceType: "Tablet",
+//     helpfulCount: 120,
+//   },
+// ];
+// helpfulCount means like
