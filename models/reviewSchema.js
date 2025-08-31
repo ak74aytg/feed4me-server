@@ -13,15 +13,6 @@ const reviewSchema = new mongoose.Schema({
   rating: Number,
   comment: String,
   helpfulCount: Number,
-  starCounts: {
-    1: { type: Number, default: 0 },
-    2: { type: Number, default: 0 },
-    3: { type: Number, default: 0 },
-    4: { type: Number, default: 0 },
-    5: { type: Number, default: 0 },
-  },
-  averageRating: Number,
-  totalReviews: Number,
   created_at: { type: Date, default: Date.now },
 });
 // Create compound unique index on inventory and username combination

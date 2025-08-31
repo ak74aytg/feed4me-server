@@ -15,7 +15,6 @@ const chatRouter = require("./routes/chatRoute.js");
 const customerRouter = require("./routes/customerRouter")
 const paymentRouter = require("./routes/paymentRoute.js")
 const reviewRouter = require("./routes/reviewRoute.js")
-const ratingRouter = require("./routes/ratingRoute.js")
 
 const ngoController = require("./controllers/ngoController")
 // Middlewares
@@ -34,7 +33,7 @@ const io = new Server(httpServer, {
 require('./socket.js')(io);
 
 app.use(express.static('public'))
-app.use('/uploads', express.static('uploads'));
+app.use('/api/public/images', express.static('uploads'));
 app.use(express.static("public"));
 app.use(express.json());
 app.use(session({
@@ -59,7 +58,6 @@ app.use("/api/customer", customerRouter);
 app.get("/api/donations/list", ngoController.getMyDonations)
 app.use('/api/payment', paymentRouter);
 app.use('/api/review', reviewRouter);
-app.use('/api/rating', ratingRouter);
 
 
 httpServer.listen(port, () => {

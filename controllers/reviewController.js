@@ -46,12 +46,9 @@ const createReview = async (req, res) => {
       inventory: inventoryId,
     });
     if (existingReview) {
-      existingReview.rating = rating ? rating : existingReview.rating
-      existingReview.comment = comment ? comment : existingReview.comment
-      existingReview.helpfulCount = helpfulCount ? helpfulCount : existingReview.helpfulCount
-      await existingReview.save()
-    } else {
-      const review = new Review({
+      return res.status(400).json({ error: "Duplicate review not allowed" });
+    }
+    const review = new Review({
         username: farmer._id,
         inventory: inventoryId,
         rating,
@@ -59,7 +56,6 @@ const createReview = async (req, res) => {
         helpfulCount,
     });
     await review.save();
-    }
     return res.json({ status: "Review added successfully" });
   } catch (error) {
     if (error.code === 11000) {
@@ -80,22 +76,19 @@ const getReviewsForInventory = async (req, res) => {
     if (!inventory) {
       return res.status(404).json({ error: "Inventory not found" });
     }
-    const reviews = await Review.find({
-        inventory: new mongoose.Types.ObjectId(inventoryId),
-        
-            $or: [
-              { rating: { $exists: true, $ne: 0 } },
-              { helpfulCount: { $exists: true, $ne: 0 } }
-            ]
-                    
-      })
-        .populate("username", "name email")
+    const reviews = await Review.find({inventory: inventoryId})
+        .populate("username", "name email profile_image")
         .select("rating comment helpfulCount created_at username")
-        .sort({ created_at: -1 });      
+        .sort({ helpfulCount: -1 });
     
-
+        reviews.forEach(review => {
+          if (review.username && review.username.profile_image) {
+            review.username.profile_image = "https://api.feed4me.in" + review.username.profile_image;
+          }
+        }); 
     return res.json({ status: "Reviews fetched successfully", data: reviews });
   } catch (error) {
+    console.error(error)
     return res.status(500).json({ error: error.message });
   }
 };
@@ -103,16 +96,11 @@ const getReviewsForInventory = async (req, res) => {
 const getMyReviews = async (req, res) => {
   try {
     const farmer = await extractUserFromToken(req, Farmer);
-    const reviews = await Review.find({ username: farmer.id ,
-            $or: [
-              { rating: { $exists: true, $ne: 0 } },
-              { helpfulCount: { $exists: true, $ne: 0 } }
-            ]          
-    })
+    const reviews = await Review.find({ username: farmer.id })
     .populate("inventory", "name description crop")
     .select("rating comment helpfulCount created_at inventory")
     .sort({
-      created_at: -1,
+      helpfulCount: -1,
     });
     return res.json({ status: "Reviews fetched successfully", data: reviews });
   } catch (error) {
@@ -120,69 +108,34 @@ const getMyReviews = async (req, res) => {
   }
 };
 
-const createRating = async (req, res) => {
-    console.log("inside")
-    try {
-      const farmer = await extractUserFromToken(req, Farmer);
-      const { inventoryId, averageRating, totalReviews, starCounts } = req.body;
-      if (!inventoryId) {
-        return res
-          .status(400)
-          .json({ error: { inventoryId: "incomplete data!" } });
-      }
-      const inventory = await Inventory.findById(inventoryId);
-      if (!inventory) {
-        return res.status(404).json({ error: "Inventory not found" });
-      }
-      const existingReview = await Review.findOne({
-        username: farmer._id,
-        inventory: inventoryId,
-      });
-      if (existingReview) {
-        existingReview.averageRating = averageRating ? averageRating : existingReview.averageRating
-        existingReview.totalReviews = totalReviews ? totalReviews : existingReview.totalReviews
-        existingReview.starCounts = starCounts ? starCounts : existingReview.starCounts
-        await existingReview.save()
-      } else {
-        const review = new Review({
-          username: farmer._id,
-          inventory: inventoryId,
-          averageRating,
-          totalReviews,
-          starCounts,
-      });
-      await review.save();
-      }
-      return res.json({ status: "Rating added successfully" });
-    } catch (error) {
-      if (error.code === 11000) {
-        return res.status(400).json({ error: "Duplicate rating not allowed" });
-      }
-      return res.status(500).json({ error: error.message });
+const getRecentReviews = async (req, res) => {
+  try {
+    const { inventoryId } = req.params;
+    if (!inventoryId) {
+      return res.status(400).json({ error: "InventoryId is required" });
     }
-  };
 
-  const getMyRating = async (req, res) => {
-    try {
-      const farmer = await extractUserFromToken(req, Farmer);
-      const ratings = await Review.find({ username: farmer.id ,
-        $or: [
-            { averageRating: { $ne: 0 } },
-            { totalReviews: { $ne: 0 } }
-          ]
-      })
-      .populate("inventory", "name description crop")
-      .select("starCounts averageRating totalReviews created_at inventory")
-      .sort({
-        created_at: -1,
-      });
-      return res.json({ status: "Ratings fetched successfully", data: ratings });
-    } catch (error) {
-      return res.status(500).json({ error: error.message });
+    const inventory = await Inventory.findById(inventoryId);
+    if (!inventory) {
+      return res.status(404).json({ error: "Inventory not found" });
     }
-  };
+    const reviews = await Review.find({inventory: inventoryId})
+        .populate("username", "name email profile_image")
+        .select("rating comment helpfulCount created_at username")
+        .sort({ helpfulCount: -1 })
+        .limit(2);
+    reviews.forEach(review => {
+      if (review.username && review.username.profile_image) {
+        review.username.profile_image = "https://api.feed4me.in" + review.username.profile_image;
+      }
+    });
+    return res.json({ status: "Reviews fetched successfully", data: reviews });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+}
 
-const getRatingsForInventory = async (req, res) => {
+const getRatingsSummary = async (req, res) => {
     try {
       const { inventoryId } = req.params;
       if (!inventoryId) {
@@ -193,18 +146,48 @@ const getRatingsForInventory = async (req, res) => {
       if (!inventory) {
         return res.status(404).json({ error: "Inventory not found" });
       }
-      const reviews = await Review.find({
-        inventory: new mongoose.Types.ObjectId(inventoryId),
-        $or: [
-            { averageRating: { $ne: 0 } },
-            { totalReviews: { $ne: 0 } }
-          ]
-      })
-        .populate("username", "name email")
-        .select("starCounts averageRating totalReviews created_at username")
-        .sort({ created_at: -1 });
-  
-      return res.json({ status: "Reviews fetched successfully", data: reviews });
+      const rating = await Review.aggregate([
+        { $match: { inventory: new mongoose.Types.ObjectId(inventoryId) } },
+        {
+          $group: {
+            _id: "$inventory",
+            averageRating: {$avg : "$rating"},
+            totalRatings: {$sum : 1 },
+            ratingsBreakdown: {
+              $push: "$rating"
+            }
+          }
+        },
+        {
+          $project: {
+            averageRating: 1,
+            totalRatings: 1,
+            ratingCount: {
+              $arrayToObject: {
+                $map: {
+                  input: [1,2,3,4,5],
+                  as: "r",
+                  in: {
+                    k: {$toString: "$$r"},
+                    v: {
+                      $size: {
+                        $filter: {
+                          input: "$ratingsBreakdown",
+                          as: "x",
+                          cond : {$eq: ["$$x", "$$r"]}
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ])
+
+      
+      return res.json({ status: "Reviews fetched successfully", data: rating[0] });
     } catch (error) {
       return res.status(500).json({ error: error.message });
     }
@@ -214,7 +197,6 @@ module.exports = {
   createReview,
   getReviewsForInventory,
   getMyReviews,
-  createRating,
-  getMyRating,
-  getRatingsForInventory,
+  getRatingsSummary,
+  getRecentReviews,
 };

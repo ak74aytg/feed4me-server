@@ -14,7 +14,7 @@ const fs = require("fs");
 const path = require("path");
 
 const secretKey = process.env.TOKEN_SECRET;
-const BASE_URL = "http://15.206.166.59:3000";
+const BASE_URL = "https://api.feed4me.in/";
 
 const extractUsernameFromToken = (token) => {
   try {

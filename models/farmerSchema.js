@@ -34,6 +34,9 @@ const farmerSchema = new Schema({
     sparse: true,
     minlength: 10
   },
+  profile_image: {
+    type: String,
+  },
   date: {
     type: Date,
     default: Date.now(),
