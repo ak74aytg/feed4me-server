@@ -33,7 +33,7 @@ const io = new Server(httpServer, {
 require('./socket.js')(io);
 
 app.use(express.static('public'))
-app.use('/api/public/images', express.static('uploads'));
+app.use('/uploads', express.static('uploads'));
 app.use(express.static("public"));
 app.use(express.json());
 app.use(session({
