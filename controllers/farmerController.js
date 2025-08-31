@@ -131,6 +131,23 @@ const getNews = async (req, res) => {
   res.json({ status: "success", data : newsList });
 }
 
+const getRecentNews = async (req, res) => {
+  const { tag, lang } = req.query;
+  const filter = { 
+    ...(tag && { tags: tag }),
+    ...(lang && { language: lang }),
+    $or: [{ validTill: { $gte: new Date() } }, { validTill: null }]
+  };
+  const news = await News.find(filter).sort({ createdAt: -1 }).limit(2);
+  const newsList = news.map(item => {
+    return {
+      ...item.toObject(),
+      imageUrl: `${BASE_URL}${item.imageUrl}`
+    };
+  });
+  res.json({ status: "success", data : newsList });
+}
+
 const addInventory = async (req, res) => {
   try {
     const token = req.headers["authorization"]?.split(" ")[1];
@@ -183,5 +200,6 @@ module.exports = {
   updateInfo,
   getNews,
   addInventory,
-  getMyCustomers
+  getMyCustomers,
+  getRecentNews,
 };
