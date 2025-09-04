@@ -13,6 +13,10 @@ const reviewSchema = new mongoose.Schema({
   rating: Number,
   comment: String,
   helpfulCount: Number,
+  helpfulCountBy: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Farmers",
+  }],
   created_at: { type: Date, default: Date.now },
 });
 // Create compound unique index on inventory and username combination

@@ -123,6 +123,7 @@ const verifyOTPAndRegister = async (identifier, otp, pendingRegistration, role) 
     password: pendingRegistration.hashedPass,
     age: pendingRegistration.age,
     location: pendingRegistration.location,
+    profile_image: "/uploads/farmer_default.png",
   });
   const token = newUser.mobile ? generateAccessToken(newUser.mobile) : generateAccessToken(newUser.email);
   await OTP.deleteOne({ identifier });

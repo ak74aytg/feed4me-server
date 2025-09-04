@@ -31,7 +31,7 @@ const extractUserFromToken = async (req, Model) => {
 const createReview = async (req, res) => {
   try {
     const farmer = await extractUserFromToken(req, Farmer);
-    const { inventoryId, rating, comment, helpfulCount } = req.body;
+    const { inventoryId, rating, comment } = req.body;
     if (!inventoryId) {
       return res
         .status(400)
@@ -49,11 +49,11 @@ const createReview = async (req, res) => {
       return res.status(400).json({ error: "Duplicate review not allowed" });
     }
     const review = new Review({
-        username: farmer._id,
-        inventory: inventoryId,
-        rating,
-        comment,
-        helpfulCount,
+      username: farmer._id,
+      inventory: inventoryId,
+      rating,
+      comment,
+      helpfulCount: 0,
     });
     await review.save();
     return res.json({ status: "Review added successfully" });
@@ -67,7 +67,10 @@ const createReview = async (req, res) => {
 
 const getReviewsForInventory = async (req, res) => {
   try {
+    const farmer = await extractUserFromToken(req, Farmer);
+    const userId = farmer._id;
     const { inventoryId } = req.params;
+
     if (!inventoryId) {
       return res.status(400).json({ error: "InventoryId is required" });
     }
@@ -76,19 +79,30 @@ const getReviewsForInventory = async (req, res) => {
     if (!inventory) {
       return res.status(404).json({ error: "Inventory not found" });
     }
-    const reviews = await Review.find({inventory: inventoryId})
-        .populate("username", "name email profile_image")
-        .select("rating comment helpfulCount created_at username")
-        .sort({ helpfulCount: -1 });
-    
-        reviews.forEach(review => {
-          if (review.username && review.username.profile_image) {
-            review.username.profile_image = "https://api.feed4me.in" + review.username.profile_image;
-          }
-        }); 
-    return res.json({ status: "Reviews fetched successfully", data: reviews });
+
+    const reviews = await Review.find({ inventory: inventoryId })
+      .populate("username", "name email profile_image")
+      .select("rating comment helpfulCount helpfulCountBy created_at username")
+      .sort({ helpfulCount: -1 })
+      .lean(); // ✅ convert to plain JS objects
+
+    reviews.forEach((review) => {
+      review.liked = review.helpfulCountBy.some(
+        (id) => id.toString() === userId.toString()
+      );
+      if (review.username && review.username.profile_image) {
+        review.username.profile_image =
+          "https://api.feed4me.in" + review.username.profile_image;
+      }
+      delete review.helpfulCountBy;
+    });
+
+    return res.json({
+      status: "Reviews fetched successfully",
+      data: reviews,
+    });
   } catch (error) {
-    console.error(error)
+    console.error(error);
     return res.status(500).json({ error: error.message });
   }
 };
@@ -97,11 +111,11 @@ const getMyReviews = async (req, res) => {
   try {
     const farmer = await extractUserFromToken(req, Farmer);
     const reviews = await Review.find({ username: farmer.id })
-    .populate("inventory", "name description crop")
-    .select("rating comment helpfulCount created_at inventory")
-    .sort({
-      helpfulCount: -1,
-    });
+      .populate("inventory", "name description crop")
+      .select("rating comment helpfulCount created_at inventory")
+      .sort({
+        helpfulCount: -1,
+      });
     return res.json({ status: "Reviews fetched successfully", data: reviews });
   } catch (error) {
     return res.status(500).json({ error: error.message });
@@ -109,6 +123,41 @@ const getMyReviews = async (req, res) => {
 };
 
 const getRecentReviews = async (req, res) => {
+  try {
+    const farmer = await extractUserFromToken(req, Farmer)
+    const userId = farmer._id
+    const { inventoryId } = req.params;
+    if (!inventoryId) {
+      return res.status(400).json({ error: "InventoryId is required" });
+    }
+
+    const inventory = await Inventory.findById(inventoryId);
+    if (!inventory) {
+      return res.status(404).json({ error: "Inventory not found" });
+    }
+    const reviews = await Review.find({ inventory: inventoryId })
+      .populate("username", "name email profile_image")
+      .select("rating comment helpfulCount helpfulCountBy created_at username")
+      .sort({ helpfulCount: -1 })
+      .limit(2)
+      .lean();
+    reviews.forEach((review) => {
+      review.liked = review.helpfulCountBy.some(
+        (id) => id.toString() === userId.toString()
+      );
+      if (review.username && review.username.profile_image) {
+        review.username.profile_image =
+          "https://api.feed4me.in" + review.username.profile_image;
+      }
+      delete review.helpfulCountBy;
+    });
+    return res.json({ status: "Reviews fetched successfully", data: reviews });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+const getRatingsSummary = async (req, res) => {
   try {
     const { inventoryId } = req.params;
     if (!inventoryId) {
@@ -119,79 +168,81 @@ const getRecentReviews = async (req, res) => {
     if (!inventory) {
       return res.status(404).json({ error: "Inventory not found" });
     }
-    const reviews = await Review.find({inventory: inventoryId})
-        .populate("username", "name email profile_image")
-        .select("rating comment helpfulCount created_at username")
-        .sort({ helpfulCount: -1 })
-        .limit(2);
-    reviews.forEach(review => {
-      if (review.username && review.username.profile_image) {
-        review.username.profile_image = "https://api.feed4me.in" + review.username.profile_image;
-      }
+    const rating = await Review.aggregate([
+      { $match: { inventory: new mongoose.Types.ObjectId(inventoryId) } },
+      {
+        $group: {
+          _id: "$inventory",
+          averageRating: { $avg: "$rating" },
+          totalRatings: { $sum: 1 },
+          ratingsBreakdown: {
+            $push: "$rating",
+          },
+        },
+      },
+      {
+        $project: {
+          averageRating: { $round: ["$averageRating", 1] },
+          totalRatings: 1,
+          ratingCount: {
+            $arrayToObject: {
+              $map: {
+                input: [1, 2, 3, 4, 5],
+                as: "r",
+                in: {
+                  k: { $toString: "$$r" },
+                  v: {
+                    $size: {
+                      $filter: {
+                        input: "$ratingsBreakdown",
+                        as: "x",
+                        cond: { $eq: ["$$x", "$$r"] },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    ]);
+
+    return res.json({
+      status: "Reviews fetched successfully",
+      data: rating[0],
     });
-    return res.json({ status: "Reviews fetched successfully", data: reviews });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
-}
+};
 
-const getRatingsSummary = async (req, res) => {
-    try {
-      const { inventoryId } = req.params;
-      if (!inventoryId) {
-        return res.status(400).json({ error: "InventoryId is required" });
-      }
-  
-      const inventory = await Inventory.findById(inventoryId);
-      if (!inventory) {
-        return res.status(404).json({ error: "Inventory not found" });
-      }
-      const rating = await Review.aggregate([
-        { $match: { inventory: new mongoose.Types.ObjectId(inventoryId) } },
-        {
-          $group: {
-            _id: "$inventory",
-            averageRating: {$avg : "$rating"},
-            totalRatings: {$sum : 1 },
-            ratingsBreakdown: {
-              $push: "$rating"
-            }
-          }
-        },
-        {
-          $project: {
-            averageRating: 1,
-            totalRatings: 1,
-            ratingCount: {
-              $arrayToObject: {
-                $map: {
-                  input: [1,2,3,4,5],
-                  as: "r",
-                  in: {
-                    k: {$toString: "$$r"},
-                    v: {
-                      $size: {
-                        $filter: {
-                          input: "$ratingsBreakdown",
-                          as: "x",
-                          cond : {$eq: ["$$x", "$$r"]}
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      ])
+const toggleHelpfulCount = async (req, res) => {
+  try {
+    const farmer = await extractUserFromToken(req, Farmer);
+    const userId = farmer._id;
+    const { reviewId } = req.params;
+    const review = await Review.findById(reviewId);
+    if (!review) throw new Error("Review not found");
 
-      
-      return res.json({ status: "Reviews fetched successfully", data: rating[0] });
-    } catch (error) {
-      return res.status(500).json({ error: error.message });
+    const alreadyLiked = review.helpfulCountBy.includes(userId.toString());
+
+    if (alreadyLiked) {
+      review.helpfulCountBy.pull(userId.toString());
+      review.helpfulCount -= 1;
+    } else {
+      review.helpfulCountBy.push(userId.toString());
+      review.helpfulCount += 1;
     }
-  };
+    await review.save();
+    return res.json({
+      status: "helpful count updated",
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: error.message });
+  }
+};
 
 module.exports = {
   createReview,
@@ -199,4 +250,5 @@ module.exports = {
   getMyReviews,
   getRatingsSummary,
   getRecentReviews,
+  toggleHelpfulCount,
 };

@@ -5,6 +5,7 @@ const router = express.Router();
 
 router.get('/', farmerController.getAllFarmersController);
 router.get('/me', farmerController.getMyProfile);
+router.put('/edit/location', farmerController.updateLocation)
 router.get('/news', farmerController.getNews);
 router.get('/news/recent', farmerController.getRecentNews);
 router.put('/', farmerController.updateInfo);

@@ -193,6 +193,26 @@ const getMyCustomers = async (req, res) => {
   }
 }
 
+const updateLocation = async (req, res) => {
+  try {
+    const token = req.headers["authorization"]?.split(" ")[1];
+    if (!token) return res.status(403).send("A token is required for authentication");
+    const identifier = extractUsernameFromToken(token);
+    const farmer = await Farmer.findOne({ $or: [{ mobile: identifier }, { email: identifier }] });
+    if (!farmer) return res.status(402).send("Token expired. Please login again!");
+    const { location } = req.body
+    if (location){
+      farmer.location = location
+    }
+    await farmer.save()
+    return res.json({status : 'location updated successfully'});
+  } catch (error) {
+    if (error.status === "fail")
+      res.status(error.statusCode).send({ error: error.message });
+    else res.status(500).send({ error: error.message });
+  }
+}
+
 module.exports = {
   getAllFarmersController,
   getFarmerController,
@@ -202,4 +222,5 @@ module.exports = {
   addInventory,
   getMyCustomers,
   getRecentNews,
+  updateLocation,
 };
