@@ -97,7 +97,8 @@ const updateStatus = async (razorpay_order_id, razorpay_payment_id, razorpay_sig
         found = true
       }
     }
-    if(found && order_history.status == "created"){
+
+    if(found && order_history.status == "created" || order_history == "created/pending"){
       item.takenBy = temp
       item.reservedQuantity = item.reservedQuantity - quantity
       item.status = "available"
@@ -105,11 +106,13 @@ const updateStatus = async (razorpay_order_id, razorpay_payment_id, razorpay_sig
       order_history.status = "failed";
       order_history.attempts = (order_history.attempts || 0) + 1;
       await order_history.save()
-    }
-    throw new CustomError(
+      throw new CustomError(
       "Payment verification failed! If your money is debited then upload some proof of payment to our email.",
-      400
-    );
+        400
+      );
+    }else{
+      throw new CustomError("Oder id does not exist", 400);
+    }
   }
 
   // ✅ Update takenBy array
