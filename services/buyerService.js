@@ -39,7 +39,7 @@ const buyInventory = async (buyer, seller, item, quantity, exitDate, session) =>
       notes: order.notes,
       offer_id: order.offer_id,
       receipt: order.receipt,
-      status: order.status,
+      status: order.status+"/pending",
     });
     await orderHistory.save();
     item.takenBy.push({
