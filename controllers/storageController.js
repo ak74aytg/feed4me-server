@@ -1,9 +1,11 @@
 const jwt = require("jsonwebtoken");
 const CustomError = require("../utils/customError");
 const inventory = require("../models/invertorySchema");
-const storageOwner = require("../models/storageSchema");
+const Storage = require("../models/storageSchema");
 const InventoryRequest = require("../requests/inventoryRequest");
 const Farmer = require("../models/farmerSchema")
+const mongoose = require("mongoose");
+const Buy = require("../services/buyerService")
 
 const secretKey = process.env.TOKEN_SECRET;
 
@@ -76,45 +78,52 @@ const getInventoriesNearMe = async (req, res) => {
 };
 
 const buyInventory = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
-    const  farmer = await extractUserFromToken(req, Farmer);
-    const { inventoryId, quantity, exitDate } = req.body;
-    const Inventory = await inventory.findById(inventoryId);
+    const farmer = await extractUserFromToken(req, Farmer);
+    let { inventoryId, quantity, exitDate } = req.body;
+    quantity = parseInt(quantity)
+    const Inventory = await inventory.findById(inventoryId).session(session);
     if (!Inventory) return res.status(404).send("Inventory not found");
-    if (Inventory.quantity < quantity) return res.status(400).send("Insufficient space available");
-    Inventory.reservedQuantity += quantity;
-    if(Inventory.reservedQuantity > Inventory.totalQuantity) res.status(400).send("Insufficient space available");
-    const expDate = exitDate ? new Date(exitDate) : Date.now() + (1000 * 60 * 60 * 24 * 28);``
-    Inventory.takenBy.push({ farmer : farmer._id, quantity : quantity, date: Date.now(), exitDate: expDate });
-    if(Inventory.reservedQuantity == Inventory.totalQuantity) Inventory.status = "full";
-    await Inventory.save();
-    const Supplier = await storageOwner.findById(Inventory.owner);
-    const invoice = {};
-    invoice.farmer = farmer._id;
-    invoice.name = farmer.name;
-    invoice.seller = {
-      name: Supplier.name,
-      mobile: Supplier.mobile,
-      email: Supplier.email,
-      address: Supplier.location.address,
-    }
-    invoice.inventory = {
-      id: Inventory._id,
-      name: Inventory.name,
-      location: Inventory.location.address,
-    }
-    invoice.quantity = quantity;
-    invoice.totalPrice = quantity * Inventory.pricePerUnit;
-    invoice.date = new Date();
-
-    // Send invoice email or create invoice record in database
-    // await invoice.save();
-
-    res.json({ status: "Inventory purchased successfully", invoice: invoice });
+    if (Inventory.reservedQuantity + quantity > Inventory.totalQuantity) return res.status(400).send("Insufficient space available");
+    const storageOwner = await Storage.findById(Inventory.owner)
+    // call the buyer services here
+    const order = await Buy.buyInventory(farmer, storageOwner, Inventory, quantity, exitDate, session)
+    await session.commitTransaction();
+    res.json({ status: "payment initiated", data: order });
   } catch (error) {
+    console.error(error)
+    await session.abortTransaction();
     if (error.status === "fail")
       res.status(error.statusCode).send({ error: error.message });
     else res.status(500).send({ error: error.message });
+  }finally {
+    session.endSession();
+  }
+}
+
+const verifyPurchase = async (req, res) => {
+  try{
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
+    req.body;
+    const response = await Buy.updateStatus(razorpay_order_id, razorpay_payment_id, razorpay_signature)
+    return res.json({ status: "payment successful", data: response });
+  }catch(error){
+    console.error(error)
+    if (error.status === "fail")
+      res.status(error.statusCode).send({ error: error.message });
+    else res.status(500).send({ error: error.message });
+  }
+}
+
+const getThisInventory = async (req, res) => {
+  const {inventoryId} = req.params
+  const inventoryItem = await inventory.findById(inventoryId).select("location _id name crop totalQuantity reservedQuantity pricePerUnit owner status")
+  if (inventoryItem){
+    return res.json({status: "fetched succesfully", data: inventoryItem})
+  }else{
+    return res.status(404).send({error: "Inventory not found"})
   }
 }
 
@@ -123,4 +132,6 @@ module.exports = {
   getMyInventory,
   getInventoriesNearMe,
   buyInventory,
+  verifyPurchase,
+  getThisInventory,
 };

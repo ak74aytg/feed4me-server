@@ -1,21 +1,34 @@
 const mongoose = require('mongoose');
 
 const paymentOrderSchema = new mongoose.Schema({
+    item: {
+        type: mongoose.Types.ObjectId,
+    },
+    seller: {
+        type: mongoose.Types.ObjectId,
+    },
+    buyer: {
+        type: mongoose.Types.ObjectId,
+    },
+    itemType: String,
+    sellerRole: String,
+    buyerRole: String,
     amount: {
         type: Number,
         required: true,
     },
+    quantity: Number,
     amount_due: Number,
     amount_paid: Number,
     attempts: Number,
     created_at: Date,
     currency: String,
     entity: String,
-    order_id: String,
-    notes: [String],
+    order_id: { type: String, unique: true }, 
+    notes: mongoose.Schema.Types.Mixed, 
     offer_id: String,
     receipt: String,
     status: String,
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model('paymentOrder', paymentOrderSchema);

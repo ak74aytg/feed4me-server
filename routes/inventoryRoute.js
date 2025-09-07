@@ -6,6 +6,7 @@ const router = express.Router();
 
 router.get('/nearby', storageController.getInventoriesNearMe);
 router.post('/purchase', storageController.buyInventory);
+router.put('/purchase/verify', storageController.verifyPurchase);
 router.get('/:id', commonController.getInventory);
 router.get('/', storageController.getMyInventory);
 router.post('/', storageController.addInventory);

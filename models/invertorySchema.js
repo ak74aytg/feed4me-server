@@ -53,9 +53,10 @@ const inventorySchema = new Schema({
       exitDate: { type: Date },
       status : {
         type: String,
-        enum: ["active", "expired"],
+        enum: ["inactive", "active", "expired"],
         default: "active",
       },
+      orderId: { type: String, unique: true },
     },
   ],
   location: {
