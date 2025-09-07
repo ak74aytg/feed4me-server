@@ -94,7 +94,7 @@ const updateStatus = async (razorpay_order_id, razorpay_payment_id, razorpay_sig
         found = true
       }
     }
-    if(found){
+    if(found && order_history.status == "created"){
       item.takenBy = temp
       item.reservedQuantity = item.reservedQuantity - quantity
       item.status = "available"
