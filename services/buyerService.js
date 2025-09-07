@@ -5,6 +5,9 @@ const CustomError = require("../utils/customError");
 
 const buyInventory = async (buyer, seller, item, quantity, exitDate, session) => {
   const today = new Date();
+  item.reservedQuantity += quantity; 
+  if (item.reservedQuantity == item.totalQuantity) item.status = "full"; 
+  await item.save({ session });
   const expDate = exitDate ? new Date(exitDate) : new Date(today.getTime() + 1000 * 60 * 60 * 24 * 28);
 
   const diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
