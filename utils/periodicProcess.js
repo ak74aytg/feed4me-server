@@ -35,7 +35,6 @@ const removeExpiredRentals = async () => {
       }
     }
 
-
     console.log("Expired rentals removed and reserved space updated.");
   } catch (error) {
     console.error("Error in removing expired rentals:", error);

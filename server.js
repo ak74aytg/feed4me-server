@@ -13,7 +13,6 @@ const cropRouter = require("./routes/cropRoute")
 const inventoryRoute = require("./routes/inventoryRoute")
 const chatRouter = require("./routes/chatRoute.js");
 const customerRouter = require("./routes/customerRouter")
-const paymentRouter = require("./routes/paymentRoute.js")
 const reviewRouter = require("./routes/reviewRoute.js")
 
 const ngoController = require("./controllers/ngoController")
@@ -56,7 +55,6 @@ app.use("/api/test", testRoute);
 app.use("/api/message", chatRouter);
 app.use("/api/customer", customerRouter);
 app.get("/api/donations/list", ngoController.getMyDonations)
-app.use('/api/payment', paymentRouter);
 app.use('/api/review', reviewRouter);
 
 
