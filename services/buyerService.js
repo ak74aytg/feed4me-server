@@ -11,7 +11,7 @@ const buyInventory = async (buyer, seller, item, quantity, exitDate, session) =>
 
   const months = diffDays / 28;
 
-  const amount = quantity * item.pricePerUnit * months * 100;
+  const amount = Math.ceil(quantity * item.pricePerUnit * months) * 100;
   const receipt =
     item.name + " | " + amount / 100 + " | " + buyer.name + " | " + seller.name;
 
