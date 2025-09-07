@@ -9,6 +9,8 @@ const News = require("../models/newsSchema");
 const InventoryRequest = require("../requests/inventoryRequest");
 const Purchases = require("../models/purchaseDetailsSchema");
 const Customer = require("../models/customerSchema");
+const OrderHistory = require("../models/orderHistorySchema");
+const Storage = require("../models/storageSchema")
 
 const secretKey = process.env.TOKEN_SECRET;
 const BASE_URL = "https://api.feed4me.in/";
@@ -213,6 +215,47 @@ const updateLocation = async (req, res) => {
   }
 }
 
+const getMyTransactions = async (req, res) => {
+  try {
+    const token = req.headers["authorization"]?.split(" ")[1];
+    if (!token) return res.status(403).send("A token is required for authentication");
+    const identifier = extractUsernameFromToken(token);
+    const farmer = await Farmer.findOne({
+      $or: [{ mobile: identifier }, { email: identifier }],
+    });
+    if (!farmer) return res.status(402).send("Token expired. Please login again!");
+    let transactions = await OrderHistory.find({ buyer: farmer._id })
+      .select(
+        "item seller itemType sellerRole amount quantity created_at order_id status"
+      )
+      .lean();
+    for (let tx of transactions) {
+      tx.amount = tx.amount / 100
+      if (tx.itemType === "Inventory") {
+        tx.item = await Inventory.findById(tx.item).select(
+          "_id name description status"
+        );
+      }
+      if (tx.sellerRole === "Storage") {
+        tx.seller = await Storage.findById(tx.seller).select("_id name");
+      } else if (tx.sellerRole === "Farmer") {
+        tx.seller = await Farmer.findById(tx.seller).select("_id name");
+      }
+      delete tx.sellerRole;
+    }
+    return res.json({
+      status: "transactions fetched successfully",
+      data: transactions,
+    });
+  } catch (error) {
+    console.error("Error in getMyTransactions:", error);
+    if (error.status === "fail")
+      res.status(error.statusCode).send({ error: error.message });
+    else res.status(500).send({ error: error.message });
+  }
+};
+
+
 module.exports = {
   getAllFarmersController,
   getFarmerController,
@@ -223,4 +266,5 @@ module.exports = {
   getMyCustomers,
   getRecentNews,
   updateLocation,
+  getMyTransactions,
 };
