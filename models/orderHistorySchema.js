@@ -29,6 +29,10 @@ const paymentOrderSchema = new mongoose.Schema({
     offer_id: String,
     receipt: String,
     status: String,
+    coins_earned: {
+        type: Number,
+        default: 0,
+    },
 }, { timestamps: true });
 
 module.exports = mongoose.model('paymentOrder', paymentOrderSchema);

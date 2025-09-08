@@ -2,6 +2,14 @@ const OrderHistory = require("../models/orderHistorySchema");
 const Inventory = require("../models/invertorySchema");
 const PaymentService = require("./paymentService");
 const CustomError = require("../utils/customError");
+const Account = require("../models/accountSchema")
+
+const generateReward = (amount) => {
+  // amount in rupees
+  const random = Math.random() * 0.05;
+  const reward = Math.floor(amount * random)
+  return reward
+}
 
 const buyInventory = async (buyer, seller, item, quantity, exitDate, session) => {
   const today = new Date();
@@ -40,6 +48,7 @@ const buyInventory = async (buyer, seller, item, quantity, exitDate, session) =>
       offer_id: order.offer_id,
       receipt: order.receipt,
       status: order.status+"/pending",
+      reward_earned: 0,
     });
     await orderHistory.save();
     item.takenBy.push({
@@ -51,7 +60,7 @@ const buyInventory = async (buyer, seller, item, quantity, exitDate, session) =>
       orderId: order.id,
     });
     await item.save({ session })
-    return {"order_id" : order.id, "amount": amount, "amount_inr" :`₹ ${amount / 100}`};
+    return {"order_id" : order.id, "amount": amount, "amount_inr" :`₹${amount / 100}`};
   } catch (error) {
     item.reservedQuantity -= quantity;
     item.status = "available";
@@ -109,9 +118,33 @@ const updateStatus = async (razorpay_order_id, razorpay_payment_id, razorpay_sig
       "Payment verification failed! If your money is debited then upload some proof of payment to our email.",
         400
       );
+    }else if(found){
+      return order_history;
     }else{
       throw new CustomError("Oder id does not exist", 400);
     }
+  }
+
+  if (order_history.status === "created" || order_history.status === "created/pending"){
+    const amount = order_history.amount / 100;
+    const reward = generateReward(amount);
+    order_history.coins_earned = reward * 100
+    await Account.findOneAndUpdate(
+    { userId: buyerId, userRole: "Farmer" },
+    {
+      // Use $inc for atomic increments to avoid race conditions.
+      $inc: {
+        totalSpend: amount,
+        feed_coin: reward,
+      },
+    },
+    {
+      // options
+      upsert: true, // Create the document if it doesn't exist.
+      new: true,    // Return the updated document.
+      setDefaultsOnInsert: true, // Apply default values if a new doc is created.
+    }
+  );
   }
 
   // ✅ Update takenBy array

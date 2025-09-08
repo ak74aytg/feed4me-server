@@ -11,6 +11,7 @@ const Purchases = require("../models/purchaseDetailsSchema");
 const Customer = require("../models/customerSchema");
 const OrderHistory = require("../models/orderHistorySchema");
 const Storage = require("../models/storageSchema")
+const Account = require("../models/accountSchema")
 
 const secretKey = process.env.TOKEN_SECRET;
 const BASE_URL = "https://api.feed4me.in/";
@@ -255,6 +256,27 @@ const getMyTransactions = async (req, res) => {
   }
 };
 
+const getMyCoins = async (req, res) => {
+  try {
+    const token = req.headers["authorization"]?.split(" ")[1];
+    if (!token) return res.status(403).send("A token is required for authentication");
+    const identifier = extractUsernameFromToken(token);
+    const farmer = await Farmer.findOne({
+      $or: [{ mobile: identifier }, { email: identifier }],
+    });
+    if (!farmer) return res.status(402).send("Token expired. Please login again!");
+    const account = await Account.findOne({userId : farmer.id, userRole: "Farmer"}).select("totalSpend feed_coin")
+    return res.json({
+      status: "Feed coins fetched successfully",
+      data: account,
+    });
+  } catch (error) {
+    console.error("Error in getMyTransactions:", error);
+    if (error.status === "fail")
+      res.status(error.statusCode).send({ error: error.message });
+    else res.status(500).send({ error: error.message });
+  }
+}
 
 module.exports = {
   getAllFarmersController,
@@ -267,4 +289,5 @@ module.exports = {
   getRecentNews,
   updateLocation,
   getMyTransactions,
+  getMyCoins,
 };
