@@ -12,9 +12,10 @@ const Customer = require("../models/customerSchema");
 const OrderHistory = require("../models/orderHistorySchema");
 const Storage = require("../models/storageSchema")
 const Account = require("../models/accountSchema")
+const axios = require("axios");
 
 const secretKey = process.env.TOKEN_SECRET;
-const BASE_URL = "https://api.feed4me.in/";
+const BASE_URL = "https://api.feed4me.in";
 
 const extractUsernameFromToken = (token) => {
   try {
