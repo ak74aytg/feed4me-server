@@ -7,6 +7,7 @@ router.get('/', farmerController.getAllFarmersController);
 router.put('/', farmerController.updateInfo);
 router.get('/coins', farmerController.getMyCoins);
 router.get('/transaction', farmerController.getMyTransactions);
+router.get('/inventory', farmerController.getPurchasedInventory);
 router.get('/me', farmerController.getMyProfile);
 router.put('/edit/location', farmerController.updateLocation)
 router.get('/news', farmerController.getNews);

@@ -280,6 +280,46 @@ const getMyCoins = async (req, res) => {
   }
 }
 
+const getPurchasedInventory = async (req, res) => {
+  try {
+    const token = req.headers["authorization"]?.split(" ")[1];
+    if (!token) return res.status(403).send("A token is required for authentication");
+    const identifier = extractUsernameFromToken(token);
+    const farmer = await Farmer.findOne({
+      $or: [{ mobile: identifier }, { email: identifier }],
+    });
+    if (!farmer) return res.status(402).send("Token expired. Please login again!");
+    const inventories = await Inventory.find({
+      takenBy: { $elemMatch: { farmer: farmer._id } }
+    });
+
+    const my_inventory = [];
+    for (let i = 0; i < inventories.length; i++) {
+      // Convert Mongoose document to plain object
+      const item = inventories[i].toObject();
+      let area = 0;
+      for (let j = 0; j < item.takenBy.length; j++) {
+        if (item.takenBy[j].farmer == farmer._id.toString()) {
+          area += item.takenBy[j].quantity;
+        }
+      }
+      delete item.takenBy; // Remove the field[2][12][6]
+      item.area = area;    // Optionally add computed area
+      my_inventory.push(item);
+    }
+    return res.json({
+      status: "Inventory fetched successfully",
+      data: my_inventory,
+    });
+  } catch (error) {
+    console.error("Error in getPurchasedInventory:", error);
+    if (error.status === "fail")
+      res.status(error.statusCode).send({ error: error.message });
+    else res.status(500).send({ error: error.message });
+  }
+};
+
+
 module.exports = {
   getAllFarmersController,
   getFarmerController,
@@ -292,4 +332,5 @@ module.exports = {
   updateLocation,
   getMyTransactions,
   getMyCoins,
+  getPurchasedInventory,
 };
