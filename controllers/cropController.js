@@ -28,8 +28,18 @@ const addCropDetails = async (req, res) => {
       $or: [{ mobile: identifier }, { email: identifier }],
     });
     if (!farmer) return res.status(402).send("Token expired. Please login again!");
-    const { name, MRP, stock } = req.body;
-    const newCrop = new CropDetails({ farmerID: farmer._id, name, MRP, stock });
+    let { name, MRP, stock, description, category, location, harvest_date, expiry_date, min_order } = req.body;
+    harvest_date = harvest_date ? new Date(harvest_date) : null;
+expiry_date = expiry_date ? new Date(expiry_date) : null;
+
+// Check validity
+if (harvest_date && isNaN(harvest_date.getTime())) {
+  return res.status(400).json({ error: "Invalid harvest_date format. Use YYYY-MM-DD." });
+}
+if (expiry_date && isNaN(expiry_date.getTime())) {
+  return res.status(400).json({ error: "Invalid expiry_date format. Use YYYY-MM-DD." });
+}
+    const newCrop = new CropDetails({ farmerID: farmer._id, name: name, MRP: MRP, initial_stock: stock, stock: stock, description: description, category: category , location: location, harvest_date : harvest_date, expiry_date: expiry_date, minimum_order_quantity: min_order });
     const savedCrop = await newCrop.save();
     if (req.file) {
       const uploadDir = path.join(__dirname, "../uploads");
@@ -57,7 +67,8 @@ const addCropDetails = async (req, res) => {
 };
 
 const getCropList = async (req, res) => {
-  const cropList = await CropDetails.find();
+  const cropList = await CropDetails.find()
+  .select("farmerID name imageUrl MRP stock description category location harvest_date expiry_date minimum_order_quantity stock_status");
   const crops = cropList.map((crop) => {
     const cropObj = crop.toObject();
     const {imageUrl, ...item} = cropObj;

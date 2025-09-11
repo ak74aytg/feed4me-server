@@ -69,22 +69,22 @@ const getMyProfile = async (req, res) => {
     const user = await Farmer.findOne({ $or: [{ mobile: identifier }, { email: identifier }] });
     if (!user) return res.status(402).send("token expired. Please login again!");
     const farmerRes = new farmerResponse( user._id, user.name, user.age, user.location, user.mobile, user.email );
-    const farmerID = user._id;
-    const crops = await CropDetails.find({ farmerID: farmerID });
-    for (let crop of crops) farmerRes.addCrop(crop._id, crop.name, crop.MRP, crop.stock);
-    const inventories = await Inventory.find({
-      takenBy: { $elemMatch: { farmer: farmerID } }
-    });
-    for(let i = 0; i < inventories.length; i++){
-      const item = inventories[i];
-      let area = 0;
-      for(let j=0;j<item.takenBy.length;j++){
-        if(item.takenBy[j].farmer == farmerID.toString()){
-          area += item.takenBy[j].quantity;
-        }
-      }
-      farmerRes.addInventory(item._id, item.name, item.crop, area, area*item.pricePerUnit, item.owner);
-    }
+    // const farmerID = user._id;
+    // const crops = await CropDetails.find({ farmerID: farmerID });
+    // for (let crop of crops) farmerRes.addCrop(crop._id, crop.name, crop.MRP, crop.stock);
+    // const inventories = await Inventory.find({
+      // takenBy: { $elemMatch: { farmer: farmerID } }
+    // });
+    // for(let i = 0; i < inventories.length; i++){
+      // const item = inventories[i];
+      // let area = 0;
+      // for(let j=0;j<item.takenBy.length;j++){
+      //   if(item.takenBy[j].farmer == farmerID.toString()){
+      //     area += item.takenBy[j].quantity;
+      //   }
+      // }
+      // farmerRes.addInventory(item._id, item.name, item.crop, area, area*item.pricePerUnit, item.owner);
+    // }
     res.json({ status: "Farmer fetched successfully", data: farmerRes });
   } catch (error) {
     if (error.status === "fail") res.status(error.statusCode).send({ error: error.message });
@@ -181,7 +181,8 @@ const getMyCustomers = async (req, res) => {
     const customerList = await Promise.all(
       purchase.map(async (item) => {
         const customer = await Customer.findById(item.buyer);
-        const crop = await CropDetails.findById(item.crop);
+        const crop = await CropDetails.findById(item.crop)
+        .select("farmerID name imageUrl MRP stock description category location harvest_date expiry_date minimum_order_quantity stock_status");
         return {
           'customer' : customer,
           'crop' : crop,

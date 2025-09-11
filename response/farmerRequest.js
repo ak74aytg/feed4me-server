@@ -6,24 +6,24 @@ class FarmerResponse {
         this.location = location;
         this.mobile = mobile;
         this.email = email;
-        this.crops = [];
-        this.inventory = [];
+        // this.crops = [];
+        // this.inventory = [];
     }
 
-    addCrop(cropId, cropName, MRP, stock) {
-        this.crops.push({ _id: cropId, name: cropName, MRP:MRP, stock: stock });
-    }
+    // addCrop(cropId, cropName, MRP, stock) {
+    //     this.crops.push({ _id: cropId, name: cropName, MRP:MRP, stock: stock });
+    // }
 
-    addInventory(id, name, crop, area, cost, owner){
-        this.inventory.push({
-            id: id,
-            name: name,
-            crop: crop,
-            area: area,
-            cost: cost,
-            owner: owner
-        });
-    }
+    // addInventory(id, name, crop, area, cost, owner){
+    //     this.inventory.push({
+    //         id: id,
+    //         name: name,
+    //         crop: crop,
+    //         area: area,
+    //         cost: cost,
+    //         owner: owner
+    //     });
+    // }
 }
 
 module.exports = FarmerResponse;
