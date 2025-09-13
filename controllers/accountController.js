@@ -53,7 +53,7 @@ const getFarmerRewards = async (req, res) => {
 
     return res.json({
       status: "coins fetched successfully",
-      orders,
+      data : orders,
     });
   } catch (error) {
     return res.status(500).json({ error: error.message });
