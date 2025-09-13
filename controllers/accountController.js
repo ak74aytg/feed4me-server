@@ -51,9 +51,21 @@ const getFarmerRewards = async (req, res) => {
       },
     ]);
 
+    for (let i = 0; i < orders.length; i++) {
+      let odr = orders[i];
+      const reciept = odr.receipt;
+      delete odr.receipt;
+
+      // receipt format: item | amount | buyer | seller
+      const [itemName, amount, buyerName, sellerName] = reciept.split(" | ");
+
+      const note = `brought ${itemName} from ${sellerName} for Rs.${amount}`;
+      odr.note = note;
+    }
+
     return res.json({
       status: "coins fetched successfully",
-      data : orders,
+      data: orders,
     });
   } catch (error) {
     return res.status(500).json({ error: error.message });
@@ -71,11 +83,17 @@ const verifyTransaction = async (req, res) => {
     const razorpay_order_id = order.razorpay_order_id;
     const razorpay_payment_id = order.razorpay_payment_id;
     const razorpay_signature = order.razorpay_signature;
-    
-    if (order.status == "failed" && verifyPayment(razorpay_order_id, razorpay_payment_id, razorpay_signature)){
-      order.status = "lost"
-      await order.save()
-      return res.json({status: "YIf any amount was debited from your account, it will be credited back shortly."})
+
+    if (
+      order.status == "failed" &&
+      verifyPayment(razorpay_order_id, razorpay_payment_id, razorpay_signature)
+    ) {
+      order.status = "lost";
+      await order.save();
+      return res.json({
+        status:
+          "YIf any amount was debited from your account, it will be credited back shortly.",
+      });
     }
 
     const order_history = await BuyService.updateStatus(
@@ -86,10 +104,9 @@ const verifyTransaction = async (req, res) => {
     );
     if (order_history.status == "success") {
       return res.json({ status: "payment verified successfully" });
-    }else{
+    } else {
       return res.status(401).send({ error: "payment verification failed" });
     }
-
   } catch (error) {
     res.status(error.statusCode).send({ error: error.message });
   }
