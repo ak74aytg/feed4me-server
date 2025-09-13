@@ -8,7 +8,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 router.get('/all', cropController.getCropList);
-router.post('/', upload.single("image"), cropController.addCropDetails);
+router.post('/', upload.array("images", 5), cropController.addCropDetails);
 router.put('/', ()=>{});
 router.delete('/', ()=>{});
 

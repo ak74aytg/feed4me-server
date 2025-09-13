@@ -10,9 +10,10 @@ const cropDetailsSchema = new mongoose.Schema({
     type: String, 
     required: true 
   },
-  imageUrl: {
-    type : String,
-  },
+  images: [{
+    type: String,
+    default: [],
+  }],
   MRP: { 
     type: Number, 
     required: true 
@@ -30,7 +31,7 @@ const cropDetailsSchema = new mongoose.Schema({
   description : String,
   category: {
     type : String,
-    enum: ["Vegetable", "Fruit", "pulse", "cash crop"]
+    enum: ["Vegetable", "Fruit", "Pulse", "Cash Crop"]
   },
   location: { type: String, required: true },
     harvest_date: { type: Date },
