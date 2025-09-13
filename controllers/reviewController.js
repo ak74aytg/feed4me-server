@@ -83,7 +83,7 @@ const getReviewsForInventory = async (req, res) => {
     const reviews = await Review.find({ inventory: inventoryId })
       .populate("username", "name email profile_image")
       .select("rating comment helpfulCount helpfulCountBy created_at username")
-      .sort({ helpfulCount: -1 })
+      .sort({ helpfulCount: -1, _id: -1 })
       .lean(); // ✅ convert to plain JS objects
 
     reviews.forEach((review) => {
@@ -115,7 +115,9 @@ const getMyReviews = async (req, res) => {
       .select("rating comment helpfulCount created_at inventory")
       .sort({
         helpfulCount: -1,
+        _id: -1,
       });
+
     return res.json({ status: "Reviews fetched successfully", data: reviews });
   } catch (error) {
     return res.status(500).json({ error: error.message });
@@ -124,8 +126,8 @@ const getMyReviews = async (req, res) => {
 
 const getRecentReviews = async (req, res) => {
   try {
-    const farmer = await extractUserFromToken(req, Farmer)
-    const userId = farmer._id
+    const farmer = await extractUserFromToken(req, Farmer);
+    const userId = farmer._id;
     const { inventoryId } = req.params;
     if (!inventoryId) {
       return res.status(400).json({ error: "InventoryId is required" });
@@ -138,7 +140,7 @@ const getRecentReviews = async (req, res) => {
     const reviews = await Review.find({ inventory: inventoryId })
       .populate("username", "name email profile_image")
       .select("rating comment helpfulCount helpfulCountBy created_at username")
-      .sort({ helpfulCount: -1 })
+      .sort({ helpfulCount: -1, _id: -1 })
       .limit(2)
       .lean();
     reviews.forEach((review) => {

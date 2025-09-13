@@ -29,7 +29,7 @@ const extractUsernameFromToken = (token) => {
 //get all farmers information
 const getAllFarmersController = async (req, res) => {
   try {
-    const farmers = await Farmer.find();
+    const farmers = await Farmer.find().sort({ _id: -1 });
     res.json({ status: "Farmers fetched successfully", data: farmers });
   } catch (error) {
     if (error.status === "fail")
@@ -230,7 +230,7 @@ const getMyTransactions = async (req, res) => {
     let transactions = await OrderHistory.find({ buyer: farmer._id })
       .select(
         "item seller itemType sellerRole amount quantity created_at order_id status"
-      )
+      ).sort({ createdAt: -1 })
       .lean();
     for (let tx of transactions) {
       tx.amount = tx.amount / 100
@@ -267,7 +267,7 @@ const getMyCoins = async (req, res) => {
       $or: [{ mobile: identifier }, { email: identifier }],
     });
     if (!farmer) return res.status(402).send("Token expired. Please login again!");
-    const account = await Account.findOne({userId : farmer.id, userRole: "Farmer"}).select("totalSpend feed_coin")
+    const account = await Account.findOne({userId : farmer.id, userRole: "Farmer"}).select("totalSpend feed_coin").sort({ _id: -1 })
     return res.json({
       status: "Feed coins fetched successfully",
       data: account,
@@ -291,7 +291,7 @@ const getPurchasedInventory = async (req, res) => {
     if (!farmer) return res.status(402).send("Token expired. Please login again!");
     const inventories = await Inventory.find({
       takenBy: { $elemMatch: { farmer: farmer._id } }
-    });
+    }).sort({ _id: -1 });
 
     const my_inventory = [];
     for (let i = 0; i < inventories.length; i++) {

@@ -5,7 +5,7 @@ const Storage = require("../models/storageSchema");
 const InventoryRequest = require("../requests/inventoryRequest");
 const Farmer = require("../models/farmerSchema")
 const mongoose = require("mongoose");
-const Buy = require("../services/buyerService")
+const BuyService = require("../services/buyerService")
 
 const secretKey = process.env.TOKEN_SECRET;
 
@@ -49,7 +49,7 @@ const addInventory = async (req, res) => {
 const getMyInventory = async (req, res) => {
   try {
     const {ownerId} = req.query;
-    const inventories = await inventory.find({ owner : ownerId });
+    const inventories = await inventory.find({ owner : ownerId }).sort({ _id: -1 });
     res.json({ status: "Inventory fetched successfully", data: inventories });
   } catch (error) {
     if (error.status === "fail") res.status(error.statusCode).send({ error: error.message });
@@ -68,7 +68,7 @@ const getInventoriesNearMe = async (req, res) => {
             $maxDistance: 60000
           }
         }
-      });
+      }).sort({ _id: -1 });
     res.json({ status: "Inventory fetched successfully", data: inventories });
   } catch (error) {
     if (error.status === "fail")
@@ -89,7 +89,7 @@ const buyInventory = async (req, res) => {
     if (Inventory.reservedQuantity + quantity > Inventory.totalQuantity) return res.status(400).send("Insufficient space available");
     const storageOwner = await Storage.findById(Inventory.owner)
     // call the buyer services here
-    const order = await Buy.buyInventory(farmer, storageOwner, Inventory, quantity, exitDate, session)
+    const order = await BuyService.buyInventory(farmer, storageOwner, Inventory, quantity, exitDate, session)
     await session.commitTransaction();
     res.json({ status: "payment initiated", data: order });
   } catch (error) {
@@ -105,9 +105,9 @@ const buyInventory = async (req, res) => {
 
 const verifyPurchase = async (req, res) => {
   try{
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
+    const { order_id, razorpay_order_id, razorpay_payment_id, razorpay_signature } =
     req.body;
-    const response = await Buy.updateStatus(razorpay_order_id, razorpay_payment_id, razorpay_signature)
+    const response = await BuyService.updateStatus(order_id, razorpay_order_id, razorpay_payment_id, razorpay_signature)
     return res.json({ status: "payment successful", data: response });
   }catch(error){
     console.error(error)

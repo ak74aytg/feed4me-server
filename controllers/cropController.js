@@ -68,7 +68,8 @@ if (expiry_date && isNaN(expiry_date.getTime())) {
 
 const getCropList = async (req, res) => {
   const cropList = await CropDetails.find()
-  .select("farmerID name imageUrl MRP stock description category location harvest_date expiry_date minimum_order_quantity stock_status");
+  .select("farmerID name imageUrl MRP stock description category location harvest_date expiry_date minimum_order_quantity stock_status")
+  .sort({ _id: -1 });
   const crops = cropList.map((crop) => {
     const cropObj = crop.toObject();
     const {imageUrl, ...item} = cropObj;

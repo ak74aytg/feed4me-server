@@ -3,6 +3,7 @@ const Inventory = require("../models/invertorySchema");
 const PaymentService = require("./paymentService");
 const CustomError = require("../utils/customError");
 const Account = require("../models/accountSchema")
+const NotificationService = require("./notificationService")
 
 const generateReward = (amount) => {
   // amount in rupees
@@ -60,6 +61,7 @@ const buyInventory = async (buyer, seller, item, quantity, exitDate, session) =>
       orderId: order.id,
     });
     await item.save({ session })
+    await NotificationService.sendNotification(buyer._id, "Farmer", null, null, "order_start", "Order Placed Successfully", "Your order has been initiated. We will notify you once the payment is confirmed.")
     return {"order_id" : order.id, "amount": amount, "amount_inr" :`₹${amount / 100}`};
   } catch (error) {
     item.reservedQuantity -= quantity;
@@ -78,12 +80,16 @@ const buyInventory = async (buyer, seller, item, quantity, exitDate, session) =>
   }
 };
 
-const updateStatus = async (razorpay_order_id, razorpay_payment_id, razorpay_signature) => {
+const updateStatus = async (order_id, razorpay_order_id, razorpay_payment_id, razorpay_signature) => {
   // ✅ Fetch the order history
-  const order_history = await OrderHistory.findOne({ order_id: razorpay_order_id });
+  const order_history = await OrderHistory.findOne({ order_id: order_id });
   if (!order_history) {
     throw new CustomError("Order not found", 404);
   }
+
+  order_history.razorpay_order_id = razorpay_order_id
+  order_history.razorpay_payment_id = razorpay_payment_id
+  order_history.razorpay_signature = razorpay_signature
 
   const buyerId = order_history.buyer;
   const itemId = order_history.item;
@@ -101,7 +107,7 @@ const updateStatus = async (razorpay_order_id, razorpay_payment_id, razorpay_sig
     temp = []
     for (let i = 0; i < item.takenBy.length; i++) {
       temp.push(item.takenBy[i])
-      if (item.takenBy[i].orderId === razorpay_order_id) {
+      if (item.takenBy[i].orderId === order_id) {
         temp.pop(item.takenBy[i])
         found = true
       }
@@ -114,6 +120,7 @@ const updateStatus = async (razorpay_order_id, razorpay_payment_id, razorpay_sig
       order_history.status = "failed";
       order_history.attempts = (order_history.attempts || 0) + 1;
       await order_history.save()
+      await NotificationService.sendNotification(buyerId, "Farmer", null, null, "order_failed", "Payment Failed" , `Your payment for Order #${order_id} could not be completed. Please try again or use a different payment method.`)
       throw new CustomError(
       "Payment verification failed! If your money is debited then upload some proof of payment to our email.",
         400
@@ -165,6 +172,11 @@ const updateStatus = async (razorpay_order_id, razorpay_payment_id, razorpay_sig
   order_history.status = "success";
   order_history.attempts = (order_history.attempts || 0) + 1;
   await order_history.save();
+
+  await NotificationService.sendNotification(buyerId, "Farmer", null, null, "order_success", "Payment Successful 🎉", `Your payment of ₹${order_history.amount / 100} has been received. Order #{orderId} is confirmed and being processed.`)
+  if(order_history.coins_earned > 100){
+    await NotificationService.sendNotification(buyerId, "Farmer", null, null, "reward", "Coins Earned 🪙", `You’ve earned ${order_history.coins_earned / 100} coins from Order #${order_id}. Keep shopping to earn more rewards!`)
+  }
   return order_history;
 };
 

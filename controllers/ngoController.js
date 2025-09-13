@@ -161,7 +161,7 @@ const getNearbyNgos = async (req, res) => {
           $maxDistance: radiusInKm * 1000,
         },
       },
-    });
+    }).sort({ _id: -1 });
     const ngoIds = contacts.map(c => c.ngoId);
     const ngos = await NGO.find({ _id: { $in: ngoIds } });
     const mergedList = contacts.map((contact) => {

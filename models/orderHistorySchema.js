@@ -29,6 +29,9 @@ const paymentOrderSchema = new mongoose.Schema({
     offer_id: String,
     receipt: String,
     status: String,
+    razorpay_order_id: String,
+    razorpay_payment_id: String,
+    razorpay_signature: String,
     coins_earned: {
         type: Number,
         default: 0,

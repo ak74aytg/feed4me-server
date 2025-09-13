@@ -1,5 +1,6 @@
 const express = require('express');
 const farmerController = require('../controllers/farmerController');
+const accountController = require('../controllers/accountController')
 
 const router = express.Router();
 
@@ -7,6 +8,7 @@ router.get('/', farmerController.getAllFarmersController);
 router.put('/', farmerController.updateInfo);
 router.get('/coins', farmerController.getMyCoins);
 router.get('/transaction', farmerController.getMyTransactions);
+router.post('/transaction/:transaction_id', accountController.verifyTransaction);
 router.get('/inventory', farmerController.getPurchasedInventory);
 router.get('/me', farmerController.getMyProfile);
 router.put('/edit/location', farmerController.updateLocation)

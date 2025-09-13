@@ -14,6 +14,8 @@ const inventoryRoute = require("./routes/inventoryRoute")
 const chatRouter = require("./routes/chatRoute.js");
 const customerRouter = require("./routes/customerRouter")
 const reviewRouter = require("./routes/reviewRoute.js")
+const accountRouter = require("./routes/accountRoute.js")
+const notificationRouter = require("./routes/notificationRoute.js")
 
 const ngoController = require("./controllers/ngoController")
 // Middlewares
@@ -56,50 +58,10 @@ app.use("/api/message", chatRouter);
 app.use("/api/customer", customerRouter);
 app.get("/api/donations/list", ngoController.getMyDonations)
 app.use('/api/review', reviewRouter);
+app.use('/api/acc/', accountRouter);
+app.use('/api/notification', notificationRouter)
 
 
 httpServer.listen(port, () => {
   console.log(`App is listening on port ${port}`);
 });
-
-
-
-// / Reviews
-// export interface Review {
-//   id: string;
-//   username: string;
-//   userAvatar: string | null;
-//   rating: number;
-//   comment: string;
-//   createdAt: string;
-//   helpfulCount: number;
-//   // votes?: string[]; // Uncomment if you manage voting
-// }
-
-
-// const reviews: Review[] = [
-//   {
-//     id: "r4",
-//     username: "Amit Verma",
-//     userAvatar: "https://example.com/avatar4.jpg",
-//     rating: 4,
-//     comment:
-//       "Good app overall, but occasional lag when switching screens. Ads are not intrusive.",
-//     createdAt: "2025-06-12T09:10:00Z",
-//     deviceType: "Phone",
-//     helpfulCount: 45,
-//   },
-
-//   {
-//     id: "r6",
-//     username: "Rohan Das",
-//     userAvatar: "https://example.com/avatar6.jpg",
-//     rating: 5,
-//     comment:
-//       "Highly recommend for casual and serious players alike. Clean design and no hassles.",
-//     createdAt: "2025-07-15T07:40:00Z",
-//     deviceType: "Tablet",
-//     helpfulCount: 120,
-//   },
-// ];
-// helpfulCount means like

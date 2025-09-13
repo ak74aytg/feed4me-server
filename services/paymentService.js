@@ -27,18 +27,26 @@ const initiatePayment = async (amount, receipt) => {
   }
 };
 
-const verifyPayment = (razorpay_order_id, razorpay_payment_id, razorpay_signature) => {
-    // return true;
-  const key_secret = process.env.RAZORPAY_SECRET;
-  const body = razorpay_order_id + "|" + razorpay_payment_id;
-  const expectedSignature = crypto
-    .createHmac("sha256", key_secret)
-    .update(body)
-    .digest("hex");
-  if (expectedSignature === razorpay_signature) {
-    return true
-  } else {
-    return false
+const verifyPayment = (
+  razorpay_order_id,
+  razorpay_payment_id,
+  razorpay_signature
+) => {
+  // return false;
+  try {
+    const key_secret = process.env.RAZORPAY_SECRET;
+    const body = razorpay_order_id + "|" + razorpay_payment_id;
+    const expectedSignature = crypto
+      .createHmac("sha256", key_secret)
+      .update(body)
+      .digest("hex");
+    if (expectedSignature === razorpay_signature) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (error) {
+    return false;
   }
 };
 
