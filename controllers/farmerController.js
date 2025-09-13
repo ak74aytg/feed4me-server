@@ -10,8 +10,8 @@ const InventoryRequest = require("../requests/inventoryRequest");
 const Purchases = require("../models/purchaseDetailsSchema");
 const Customer = require("../models/customerSchema");
 const OrderHistory = require("../models/orderHistorySchema");
-const Storage = require("../models/storageSchema")
-const Account = require("../models/accountSchema")
+const Storage = require("../models/storageSchema");
+const Account = require("../models/accountSchema");
 const axios = require("axios");
 
 const secretKey = process.env.TOKEN_SECRET;
@@ -64,30 +64,44 @@ const getFarmerController = async (req, res) => {
 const getMyProfile = async (req, res) => {
   try {
     const token = req.headers["authorization"]?.split(" ")[1];
-    if (!token) return res.status(403).send("A token is required for authentication");
+    if (!token)
+      return res.status(403).send("A token is required for authentication");
     const identifier = extractUsernameFromToken(token);
-    const user = await Farmer.findOne({ $or: [{ mobile: identifier }, { email: identifier }] });
-    if (!user) return res.status(402).send("token expired. Please login again!");
-    const farmerRes = new farmerResponse( user._id, user.name, user.age, user.location, user.mobile, user.email );
+    const user = await Farmer.findOne({
+      $or: [{ mobile: identifier }, { email: identifier }],
+    });
+    if (!user)
+      return res.status(402).send("token expired. Please login again!");
+    const profile_image = `${BASE_URL}${user.profile_image}`
+    const farmerRes = new farmerResponse(
+      user._id,
+      user.name,
+      user.age,
+      user.location,
+      user.mobile,
+      user.email,
+      profile_image,
+    );
     // const farmerID = user._id;
     // const crops = await CropDetails.find({ farmerID: farmerID });
     // for (let crop of crops) farmerRes.addCrop(crop._id, crop.name, crop.MRP, crop.stock);
     // const inventories = await Inventory.find({
-      // takenBy: { $elemMatch: { farmer: farmerID } }
+    // takenBy: { $elemMatch: { farmer: farmerID } }
     // });
     // for(let i = 0; i < inventories.length; i++){
-      // const item = inventories[i];
-      // let area = 0;
-      // for(let j=0;j<item.takenBy.length;j++){
-      //   if(item.takenBy[j].farmer == farmerID.toString()){
-      //     area += item.takenBy[j].quantity;
-      //   }
-      // }
-      // farmerRes.addInventory(item._id, item.name, item.crop, area, area*item.pricePerUnit, item.owner);
+    // const item = inventories[i];
+    // let area = 0;
+    // for(let j=0;j<item.takenBy.length;j++){
+    //   if(item.takenBy[j].farmer == farmerID.toString()){
+    //     area += item.takenBy[j].quantity;
+    //   }
+    // }
+    // farmerRes.addInventory(item._id, item.name, item.crop, area, area*item.pricePerUnit, item.owner);
     // }
     res.json({ status: "Farmer fetched successfully", data: farmerRes });
   } catch (error) {
-    if (error.status === "fail") res.status(error.statusCode).send({ error: error.message });
+    if (error.status === "fail")
+      res.status(error.statusCode).send({ error: error.message });
     else res.status(500).send({ error: error.message });
   }
 };
@@ -97,21 +111,29 @@ const updateInfo = async (req, res) => {
   try {
     const { name, age, location } = req.body;
     const token = req.headers["authorization"]?.split(" ")[1];
-    if (!token) return res.status(403).send("A token is required for authentication");
+    if (!token)
+      return res.status(403).send("A token is required for authentication");
     const identifier = extractUsernameFromToken(token);
-    const farmer = await Farmer.findOne({ $or: [{ mobile: identifier }, { email: identifier }] });
-    if (!farmer) return res.status(402).send("Token expired. Please login again!");
+    const farmer = await Farmer.findOne({
+      $or: [{ mobile: identifier }, { email: identifier }],
+    });
+    if (!farmer)
+      return res.status(402).send("Token expired. Please login again!");
     const updates = {};
     if (name) updates.name = name;
     if (age) updates.age = age;
     if (location) updates.location = location;
-    if (Object.keys(updates).length === 0) return res.status(400).send({ error: "No data provided to update" });
+    if (Object.keys(updates).length === 0)
+      return res.status(400).send({ error: "No data provided to update" });
     const updatedFarmer = await Farmer.findOneAndUpdate(
       { _id: farmer._id },
       updates,
       { new: true, runValidators: true }
     );
-    return res.json({ status: "Farmer data updated successfully", data: updatedFarmer });
+    return res.json({
+      status: "Farmer data updated successfully",
+      data: updatedFarmer,
+    });
   } catch (error) {
     console.error("Error updating farmer:", error);
     res.status(500).send({ error: error.message });
@@ -120,45 +142,49 @@ const updateInfo = async (req, res) => {
 
 const getNews = async (req, res) => {
   const { tag, lang } = req.query;
-  const filter = { 
+  const filter = {
     ...(tag && { tags: tag }),
     ...(lang && { language: lang }),
-    $or: [{ validTill: { $gte: new Date() } }, { validTill: null }]
+    $or: [{ validTill: { $gte: new Date() } }, { validTill: null }],
   };
   const news = await News.find(filter).sort({ createdAt: -1 });
-  const newsList = news.map(item => {
+  const newsList = news.map((item) => {
     return {
       ...item.toObject(),
-      imageUrl: `${BASE_URL}${item.imageUrl}`
+      imageUrl: `${BASE_URL}${item.imageUrl}`,
     };
   });
-  res.json({ status: "success", data : newsList });
-}
+  res.json({ status: "success", data: newsList });
+};
 
 const getRecentNews = async (req, res) => {
   const { tag, lang } = req.query;
-  const filter = { 
+  const filter = {
     ...(tag && { tags: tag }),
     ...(lang && { language: lang }),
-    $or: [{ validTill: { $gte: new Date() } }, { validTill: null }]
+    $or: [{ validTill: { $gte: new Date() } }, { validTill: null }],
   };
   const news = await News.find(filter).sort({ createdAt: -1 }).limit(2);
-  const newsList = news.map(item => {
+  const newsList = news.map((item) => {
     return {
       ...item.toObject(),
-      imageUrl: `${BASE_URL}${item.imageUrl}`
+      imageUrl: `${BASE_URL}${item.imageUrl}`,
     };
   });
-  res.json({ status: "success", data : newsList });
-}
+  res.json({ status: "success", data: newsList });
+};
 
 const addInventory = async (req, res) => {
   try {
     const token = req.headers["authorization"]?.split(" ")[1];
-    if (!token) return res.status(403).send("A token is required for authentication");
+    if (!token)
+      return res.status(403).send("A token is required for authentication");
     const identifier = extractUsernameFromToken(token);
-    const farmer = await Farmer.findOne({ $or: [{ mobile: identifier }, { email: identifier }] });
-    if (!farmer) return res.status(402).send("Token expired. Please login again!");
+    const farmer = await Farmer.findOne({
+      $or: [{ mobile: identifier }, { email: identifier }],
+    });
+    if (!farmer)
+      return res.status(402).send("Token expired. Please login again!");
     const request = new InventoryRequest(req.body);
     request.owner = farmer._id;
     await Inventory.create(request);
@@ -173,67 +199,79 @@ const addInventory = async (req, res) => {
 const getMyCustomers = async (req, res) => {
   try {
     const token = req.headers["authorization"]?.split(" ")[1];
-    if (!token) return res.status(403).send("A token is required for authentication");
-    const identifier = extractUsernameFromToken(token);
-    const farmer = await Farmer.findOne({ $or: [{ mobile: identifier }, { email: identifier }] });
-    if (!farmer) return res.status(402).send("Token expired. Please login again!");
-    const purchase = await Purchases.find({seller : farmer._id});
-    const customerList = await Promise.all(
-      purchase.map(async (item) => {
-        const customer = await Customer.findById(item.buyer);
-        const crop = await CropDetails.findById(item.crop)
-        .select("farmerID name imageUrl MRP stock description category location harvest_date expiry_date minimum_order_quantity stock_status");
-        return {
-          'customer' : customer,
-          'crop' : crop,
-          'amount' : item.quantity
-        }
-      })
-    )
-    return res.json({status : 'success', data : customerList});
-  } catch (error) {
-    if (error.status === "fail")
-      res.status(error.statusCode).send({ error: error.message });
-    else res.status(500).send({ error: error.message });
-  }
-}
-
-const updateLocation = async (req, res) => {
-  try {
-    const token = req.headers["authorization"]?.split(" ")[1];
-    if (!token) return res.status(403).send("A token is required for authentication");
-    const identifier = extractUsernameFromToken(token);
-    const farmer = await Farmer.findOne({ $or: [{ mobile: identifier }, { email: identifier }] });
-    if (!farmer) return res.status(402).send("Token expired. Please login again!");
-    const { location } = req.body
-    if (location){
-      farmer.location = location
-    }
-    await farmer.save()
-    return res.json({status : 'location updated successfully'});
-  } catch (error) {
-    if (error.status === "fail")
-      res.status(error.statusCode).send({ error: error.message });
-    else res.status(500).send({ error: error.message });
-  }
-}
-
-const getMyTransactions = async (req, res) => {
-  try {
-    const token = req.headers["authorization"]?.split(" ")[1];
-    if (!token) return res.status(403).send("A token is required for authentication");
+    if (!token)
+      return res.status(403).send("A token is required for authentication");
     const identifier = extractUsernameFromToken(token);
     const farmer = await Farmer.findOne({
       $or: [{ mobile: identifier }, { email: identifier }],
     });
-    if (!farmer) return res.status(402).send("Token expired. Please login again!");
+    if (!farmer)
+      return res.status(402).send("Token expired. Please login again!");
+    const purchase = await Purchases.find({ seller: farmer._id });
+    const customerList = await Promise.all(
+      purchase.map(async (item) => {
+        const customer = await Customer.findById(item.buyer);
+        const crop = await CropDetails.findById(item.crop).select(
+          "farmerID name imageUrl MRP stock description category location harvest_date expiry_date minimum_order_quantity stock_status"
+        );
+        return {
+          customer: customer,
+          crop: crop,
+          amount: item.quantity,
+        };
+      })
+    );
+    return res.json({ status: "success", data: customerList });
+  } catch (error) {
+    if (error.status === "fail")
+      res.status(error.statusCode).send({ error: error.message });
+    else res.status(500).send({ error: error.message });
+  }
+};
+
+const updateLocation = async (req, res) => {
+  try {
+    const token = req.headers["authorization"]?.split(" ")[1];
+    if (!token)
+      return res.status(403).send("A token is required for authentication");
+    const identifier = extractUsernameFromToken(token);
+    const farmer = await Farmer.findOne({
+      $or: [{ mobile: identifier }, { email: identifier }],
+    });
+    if (!farmer)
+      return res.status(402).send("Token expired. Please login again!");
+    const { location } = req.body;
+    if (location) {
+      farmer.location = location;
+    }
+    await farmer.save();
+    return res.json({ status: "location updated successfully" });
+  } catch (error) {
+    if (error.status === "fail")
+      res.status(error.statusCode).send({ error: error.message });
+    else res.status(500).send({ error: error.message });
+  }
+};
+
+const getMyTransactions = async (req, res) => {
+  try {
+    const token = req.headers["authorization"]?.split(" ")[1];
+    if (!token)
+      return res.status(403).send("A token is required for authentication");
+    const identifier = extractUsernameFromToken(token);
+    const farmer = await Farmer.findOne({
+      $or: [{ mobile: identifier }, { email: identifier }],
+    });
+    if (!farmer)
+      return res.status(402).send("Token expired. Please login again!");
     let transactions = await OrderHistory.find({ buyer: farmer._id })
       .select(
         "item seller itemType sellerRole amount quantity created_at order_id status"
-      ).sort({ createdAt: -1 })
+      )
+      .sort({ createdAt: -1 })
       .lean();
     for (let tx of transactions) {
-      tx.amount = tx.amount / 100
+      tx.amount = tx.amount / 100;
       if (tx.itemType === "Inventory") {
         tx.item = await Inventory.findById(tx.item).select(
           "_id name description status"
@@ -261,13 +299,20 @@ const getMyTransactions = async (req, res) => {
 const getMyCoins = async (req, res) => {
   try {
     const token = req.headers["authorization"]?.split(" ")[1];
-    if (!token) return res.status(403).send("A token is required for authentication");
+    if (!token)
+      return res.status(403).send("A token is required for authentication");
     const identifier = extractUsernameFromToken(token);
     const farmer = await Farmer.findOne({
       $or: [{ mobile: identifier }, { email: identifier }],
     });
-    if (!farmer) return res.status(402).send("Token expired. Please login again!");
-    const account = await Account.findOne({userId : farmer.id, userRole: "Farmer"}).select("totalSpend feed_coin").sort({ _id: -1 })
+    if (!farmer)
+      return res.status(402).send("Token expired. Please login again!");
+    const account = await Account.findOne({
+      userId: farmer.id,
+      userRole: "Farmer",
+    })
+      .select("totalSpend feed_coin")
+      .sort({ _id: -1 });
     return res.json({
       status: "Feed coins fetched successfully",
       data: account,
@@ -278,19 +323,21 @@ const getMyCoins = async (req, res) => {
       res.status(error.statusCode).send({ error: error.message });
     else res.status(500).send({ error: error.message });
   }
-}
+};
 
 const getPurchasedInventory = async (req, res) => {
   try {
     const token = req.headers["authorization"]?.split(" ")[1];
-    if (!token) return res.status(403).send("A token is required for authentication");
+    if (!token)
+      return res.status(403).send("A token is required for authentication");
     const identifier = extractUsernameFromToken(token);
     const farmer = await Farmer.findOne({
       $or: [{ mobile: identifier }, { email: identifier }],
     });
-    if (!farmer) return res.status(402).send("Token expired. Please login again!");
+    if (!farmer)
+      return res.status(402).send("Token expired. Please login again!");
     const inventories = await Inventory.find({
-      takenBy: { $elemMatch: { farmer: farmer._id } }
+      takenBy: { $elemMatch: { farmer: farmer._id } },
     }).sort({ _id: -1 });
 
     const my_inventory = [];
@@ -304,7 +351,7 @@ const getPurchasedInventory = async (req, res) => {
         }
       }
       delete item.takenBy; // Remove the field[2][12][6]
-      item.area = area;    // Optionally add computed area
+      item.area = area; // Optionally add computed area
       my_inventory.push(item);
     }
     return res.json({
@@ -319,6 +366,41 @@ const getPurchasedInventory = async (req, res) => {
   }
 };
 
+const updateProfileImage = async (req, res) => {
+  try {
+    const token = req.headers["authorization"]?.split(" ")[1];
+    if (!token)
+      return res.status(403).send("A token is required for authentication");
+    const identifier = extractUsernameFromToken(token);
+    const farmer = await Farmer.findOne({
+      $or: [{ mobile: identifier }, { email: identifier }],
+    });
+    if (!farmer)
+      return res.status(402).send("Token expired. Please login again!");
+
+    if (!req.file) {
+      return res.status(400).json({
+        status: "error",
+        message: "No image uploaded",
+      });
+    }
+    const imagePath = `/uploads/${req.file.filename}`;
+
+    farmer.profile_image = imagePath;
+    await farmer.save();
+
+    return res.json({
+      status: "success",
+      message: "Profile image updated successfully",
+    });
+  } catch (error) {
+    console.error("Error updating profile image:", error);
+    return res.status(500).json({
+      status: "error",
+      message: "Server error",
+    });
+  }
+};
 
 module.exports = {
   getAllFarmersController,
@@ -333,4 +415,5 @@ module.exports = {
   getMyTransactions,
   getMyCoins,
   getPurchasedInventory,
+  updateProfileImage,
 };
