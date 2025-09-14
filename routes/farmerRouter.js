@@ -16,7 +16,7 @@ router.get('/me', farmerController.getMyProfile);
 router.put('/edit/location', farmerController.updateLocation)
 router.get('/news', farmerController.getNews);
 router.get('/news/recent', farmerController.getRecentNews);
-router.post('/inventory/add', farmerController.addInventory);
+router.post('/inventory/add', upload.array("images", 5), farmerController.addInventory);
 router.get('/customers', farmerController.getMyCustomers);
 router.get('/:parameter', farmerController.getFarmerController);
 

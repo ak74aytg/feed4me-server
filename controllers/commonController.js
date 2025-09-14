@@ -5,6 +5,7 @@ const storageOwner = require("../models/storageSchema");
 const Farmer = require("../models/farmerSchema");
 
 const secretKey = process.env.TOKEN_SECRET;
+const BASE_URL = "https://api.feed4me.in"
 
 const extractUserFromToken = async (req, Model) => {
   try {
@@ -27,6 +28,9 @@ const getInventory = async (req, res) => {
   try {
     const inventoryId = req.params.id;
     const inventory = await Inventory.findById(inventoryId);
+    for (let i = 0; i < inventory?.images?.length; i++) {
+      inventory.images[i] = BASE_URL + inventory.images[i];
+    }
     res.json({ status: "Inventory fetched successfully", data: inventory });
   } catch (error) {
     if (error.status === "fail")

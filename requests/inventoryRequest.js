@@ -23,6 +23,7 @@ class InventoryRequest {
         this.owner = null;
         this.takenBy = [];
         this.location = location;
+        this.images = [];
     }
 }
 

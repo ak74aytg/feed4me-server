@@ -69,6 +69,10 @@ const inventorySchema = new Schema({
       },
     },
   },
+  images: [{
+    type: String,
+    default: [],
+  }],
 });
 
 inventorySchema.index({ "location.coordinates": "2dsphere" });

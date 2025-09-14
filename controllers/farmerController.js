@@ -185,10 +185,29 @@ const addInventory = async (req, res) => {
     });
     if (!farmer)
       return res.status(402).send("Token expired. Please login again!");
-    const request = new InventoryRequest(req.body);
+    
+        let location = req.body.location;
+        if (typeof location === "string") {
+          try {
+            location = JSON.parse(location);
+          } catch (err) {
+            return res
+              .status(400)
+              .json({ error: "Invalid location format, must be JSON" });
+          }
+        }
+        const request = new InventoryRequest({ ...req.body, location });
     request.owner = farmer._id;
-    await Inventory.create(request);
-    res.json({ status: "Inventory added successfully", data: request });
+    let imagePaths = [];
+    if (req.files && req.files.length > 0) {
+      imagePaths = req.files.map((file) => `/uploads/${file.filename}`);
+    }
+    request.images = imagePaths;
+    const savedInventory = await Inventory.create(request);
+    for (let i=0;i<savedInventory.images.length;i++){
+      savedInventory.images[i] = BASE_URL+savedInventory.images[i];
+    }
+    res.json({ status: "Inventory added successfully", data: savedInventory });
   } catch (error) {
     if (error.status === "fail")
       res.status(error.statusCode).send({ error: error.message });
@@ -353,6 +372,11 @@ const getPurchasedInventory = async (req, res) => {
       delete item.takenBy; // Remove the field[2][12][6]
       item.area = area; // Optionally add computed area
       my_inventory.push(item);
+    }
+    for (let inventory of my_inventory){
+      for (let i = 0; i < inventory?.images?.length; i++) {
+        inventory.images[i] = BASE_URL + inventory.images[i];
+      }
     }
     return res.json({
       status: "Inventory fetched successfully",
